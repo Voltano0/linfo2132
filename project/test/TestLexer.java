@@ -9,7 +9,7 @@ public class TestLexer {
 
     @Test
     public void testTokens() throws IOException {
-        String input = "myVariable += 00342;"; //
+        String input = "Point rec { int x; int y; }";   //
         StringReader reader = new StringReader(input);
         Lexer lexer = new Lexer(reader);
 

@@ -28,7 +28,9 @@ public class Lexer {
     private boolean isKeyword(String word) {
         return word.matches("free|final|rec|fun|for|while|if|else|return|int|float|string|bool");
     }
-
+    private boolean isBuilIn(String word) {
+        return word.matches("chr|len|floor|readInt|readFloat|readString|writeInt|writeFloat|writeln|write");
+    }
     // Get the next symbol
     public Symbol getNextSymbol() throws IOException {
 
@@ -59,10 +61,12 @@ public class Lexer {
             if(value.equals("true") || value.equals("false")){
                 return new Symbol(Symbol.TokenType.BOOLEAN, value);
             }
-            if (isKeyword(value)) {
-                return new Symbol(Symbol.TokenType.KEYWORD, value); // 🔹 Corrigé ici
+            if(isBuilIn(value)){
+                return new Symbol(Symbol.TokenType.BUILTIN, value);
             }
-            //Record
+            if (isKeyword(value)) {
+                return new Symbol(Symbol.TokenType.KEYWORD, value);
+            }
             if(Character.isUpperCase(value.charAt(0))){
                 return new Symbol(Symbol.TokenType.RECORD, value);
             }

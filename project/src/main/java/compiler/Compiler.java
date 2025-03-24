@@ -33,10 +33,8 @@ public class Compiler {
             } catch (IOException e) {
                 System.err.println("Error reading file: " + e.getMessage());
             }
-        } else {
-            System.out.println("Unknown mode: " + mode);
         }
-        if("-parser".equals(mode)){
+        else if("-parser".equals(mode)){
             try (FileReader reader = new FileReader(filepath)) {
                 Lexer lexer = new Lexer(reader);
                 Parser parser = new Parser(lexer);
@@ -48,5 +46,6 @@ public class Compiler {
         } else {
             System.out.println("Unknown mode: " + mode);
         }
+
     }
 }

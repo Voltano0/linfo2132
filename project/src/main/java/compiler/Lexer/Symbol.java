@@ -3,7 +3,7 @@ package compiler.Lexer;
 public class Symbol {
     public enum TokenType {
         IDENTIFIER, KEYWORD, INTEGER, FLOAT, STRING, BOOLEAN,
-        OPERATOR, PUNCTUATION, COMMENT, EOF, RECORD, EOL
+        OPERATOR, PUNCTUATION, COMMENT, EOF, RECORD, EOL, BUILTIN
     }
 
     private TokenType type;

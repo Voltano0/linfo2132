@@ -1,7 +1,10 @@
 package compiler.Parser;
 
 public abstract class ASTNode {
-    abstract public String toString();
+    public abstract String prettyPrint(String indent);
+
+    @Override
+    public String toString() {
+        return prettyPrint("");
+    }
 }
-
-
