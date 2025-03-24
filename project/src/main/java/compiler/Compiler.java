@@ -8,8 +8,10 @@ import java.io.FileReader;
 
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
-import compiler.Parser.ASTNode;
 import compiler.Parser.Parser;
+import compiler.Parser.ASTNode;
+
+
 
 public class Compiler {
     public static void main(String[] args) {

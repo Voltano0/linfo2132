@@ -108,7 +108,6 @@ public class Parser {
         expect(Symbol.TokenType.KEYWORD);
         expect(Symbol.TokenType.OPERATOR);// Expect '='
         ASTNode initializer = parseExpression();
-        advance();
         expect(Symbol.TokenType.EOL); // Expect ';'
 
         return new VariableDeclarationNode(isFinal, type, name, initializer);
@@ -204,7 +203,7 @@ public class Parser {
                 } else {
                     return new IdentifierNode(name);
                 }
-            case INTEGER, FLOAT:
+            case INTEGER, FLOAT, STRING, BOOLEAN:
                 Object value = currentSymbol.getValue();
                 advance();
                 return new LiteralNode(value);
@@ -221,7 +220,7 @@ public class Parser {
                 ASTNode operand = parsePrimaryExpression();
                 return new UnaryOperationNode(operator, operand);
             default:
-                throw new IOException("Unexpected token: " + currentSymbol.getType());
+                throw new IOException("Unexpected tokn: " + currentSymbol.getType());
         }
     }
 

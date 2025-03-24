@@ -2,7 +2,7 @@ package compiler.Parser;
 
 import java.util.List;
 
-class ProgramNode extends ASTNode {
+public class ProgramNode extends ASTNode {
     List<ASTNode> statements;
 
     public ProgramNode(List<ASTNode> statements) {
