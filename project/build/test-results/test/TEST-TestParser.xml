@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="TestParser" tests="1" skipped="0" failures="1" errors="0" timestamp="2025-03-24T13:57:13" hostname="theo-HP-Pavilion-Laptop-15-eh3xxx" time="0.021">
+<testsuite name="TestParser" tests="1" skipped="0" failures="1" errors="0" timestamp="2025-03-24T14:46:41" hostname="theo-HP-Pavilion-Laptop-15-eh3xxx" time="0.025">
   <properties/>
-  <testcase name="testSimpleAssignment" classname="TestParser" time="0.021">
-    <failure message="java.io.IOException: Unrecognized character: '" type="java.io.IOException">java.io.IOException: Unrecognized character: '
-	at compiler.Lexer.Lexer.getNextSymbol(Lexer.java:141)
-	at compiler.Parser.Parser.advance(Parser.java:21)
-	at compiler.Parser.Parser.parseBinaryOperation(Parser.java:191)
-	at compiler.Parser.Parser.parseExpression(Parser.java:142)
-	at compiler.Parser.Parser.parseVariableDeclaration(Parser.java:69)
-	at compiler.Parser.Parser.parseStatement(Parser.java:51)
-	at compiler.Parser.Parser.parseProgram(Parser.java:35)
-	at TestParser.testSimpleAssignment(TestParser.java:19)
+  <testcase name="testSimpleAssignment" classname="TestParser" time="0.025">
+    <failure message="java.io.IOException: Expected KEYWORD but found IDENTIFIER" type="java.io.IOException">java.io.IOException: Expected KEYWORD but found IDENTIFIER
+	at compiler.Parser.Parser.expect(Parser.java:27)
+	at compiler.Parser.Parser.parseRecordDeclaration(Parser.java:81)
+	at compiler.Parser.Parser.parseStatement(Parser.java:52)
+	at compiler.Parser.Parser.parseProgram(Parser.java:34)
+	at TestParser.testSimpleAssignment(TestParser.java:23)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)

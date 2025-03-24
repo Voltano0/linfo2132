@@ -2,7 +2,6 @@ package compiler.Parser;
 
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
-import compiler.Parser.ProgramNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +47,52 @@ public class Parser {
                     default -> throw new IOException("Unexpected keyword: " + currentSymbol.getValue());
                 };
             case IDENTIFIER:
-                return parseVariableDeclaration();
+                return parseAssignmentOrVariableDeclaration();
+            case RECORD:
+                return parseRecordDeclaration();
             default:
                 throw new IOException("Unexpected token: " + currentSymbol.getType());
         }
+    }
+
+    private ASTNode parseAssignmentOrVariableDeclaration() throws IOException {
+        String name = currentSymbol.getValue();
+        advance();
+        if (currentSymbol.getType() == Symbol.TokenType.OPERATOR) {
+            String operator = currentSymbol.getValue();
+            if (operator.equals("=")) {
+                return parseVariableDeclaration();
+            } else if (operator.equals("+") || operator.equals("-") || operator.equals("*") || operator.equals("/")) {
+                return parseAssignment(name);
+            }
+        }
+        throw new IOException("Unexpected token: " + currentSymbol.getType());
+    }
+    private RecordDeclarationNode parseRecordDeclaration() throws IOException {
+        String name = currentSymbol.getValue();
+        expect(Symbol.TokenType.RECORD); //
+        expect(Symbol.TokenType.KEYWORD); // Expect 'rec'
+        expect(Symbol.TokenType.OPERATOR); // Expect '{'
+        List<FieldNode> fields = new ArrayList<>();
+        while (currentSymbol.getType() != Symbol.TokenType.OPERATOR || !currentSymbol.getValue().equals("}")) {
+            String fieldName = currentSymbol.getValue();
+            advance();
+            String fieldType = currentSymbol.getValue();
+            expect(Symbol.TokenType.KEYWORD);
+            fields.add(new FieldNode(fieldName, fieldType));
+            if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(";")) {
+                advance();
+            }
+        }
+        expect(Symbol.TokenType.OPERATOR); // Expect '}'
+        return new RecordDeclarationNode(name, fields);
+    }
+    private ASTNode parseAssignment(String name) throws IOException {
+        String operator = currentSymbol.getValue();
+        advance();
+        ASTNode value = parseExpression();
+        expect(Symbol.TokenType.EOL); // Expect ';'
+        return new AssignmentNode(name, operator, value);
     }
 
     private VariableDeclarationNode parseVariableDeclaration() throws IOException {
