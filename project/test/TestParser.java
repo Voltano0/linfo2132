@@ -12,11 +12,7 @@ public class TestParser {
 
     @Test
     public void testSimpleAssignment() throws IOException {
-        String input = "Person rec{ " +
-                "    name string; " +
-                "    location bool;" +
-                "    history int;" +
-                "} ";
+        String input =
         StringReader reader = new StringReader(input);
         Lexer lexer = new Lexer(reader);
         Parser parser = new Parser(lexer);

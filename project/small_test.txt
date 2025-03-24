@@ -1,19 +1,33 @@
-$ COMMENT This is a comment
+$Good luck
 
-$ IDENTIFIER and KEYWORD
-int myVariable = 42;  $ INTEGER
-float myFloat = 3.14; $ FLOAT
-String myString = "Hello, World!"; $ STRING
-boolean myBoolean = true; $ BOOLEAN
+final message string = "Hello";
+final run bool = true;
 
-$ OPERATOR and PUNCTUATION
-myVariable += 00342; $ OPERATOR
-char punctuation = ";"; $ PUNCTUATION
+Point rec {
+    int x;
+    int y;
+}
 
-$ RECORD (Java record declaration)
-record Person(String name, int age) {} $ RECORD
+a int = 3;
 
-$ End of line (EOL) test
-System.out.println(myString); $ EOL should be detected here
+fun square(int v) int {
+    return v*v;
+}
 
-$ EOF (End of file marker should be handled by lexer implicitly)
+fun main() {
+    value int = readInt();
+    Point p = Point(a, a+value);
+    writeInt(square(value));
+    writeln();
+    i int;
+    for (i, 1, a, 1) {
+        while (value!=0) {
+            if (run){
+                value = value - 1;
+            } else {
+                write(message);
+            }
+        }
+    }
+    i = (i+2)*2;
+}
