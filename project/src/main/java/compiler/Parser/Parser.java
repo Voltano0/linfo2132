@@ -136,8 +136,59 @@ public class Parser {
     }
 
     private ASTNode parseExpression() throws IOException {
-        // Implement expression parsing based on operator precedence and associativity
-        // This is a placeholder implementation
-        return new LiteralNode(currentSymbol.getValue());
+        return parseBinaryOperation();
+    }
+
+
+    private ASTNode parsePrimaryExpression() throws IOException {
+        switch (currentSymbol.getType()) {
+            case IDENTIFIER:
+                String name = currentSymbol.getValue();
+                advance();
+                if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals("(")) {
+                    // Function call
+                    advance();
+                    List<ASTNode> arguments = new ArrayList<>();
+                    while (currentSymbol.getType() != Symbol.TokenType.OPERATOR || !currentSymbol.getValue().equals(")")) {
+                        arguments.add(parseExpression());
+                        if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(",")) {
+                            advance();
+                        }
+                    }
+                    expect(Symbol.TokenType.OPERATOR); // Expect ')'
+                    return new FunctionCallNode(name, arguments);
+                } else {
+                    // Identifier
+                    return new IdentifierNode(name);
+                }
+            case INTEGER:
+                Object value = currentSymbol.getValue();
+                advance();
+                return new LiteralNode(value);
+            case OPERATOR:
+                if (currentSymbol.getValue().equals("(")) {
+                    advance();
+                    ASTNode expr = parseExpression();
+                    expect(Symbol.TokenType.OPERATOR); // Expect ')'
+                    return expr;
+                }
+                String operator = currentSymbol.getValue();
+                advance();
+                ASTNode operand = parsePrimaryExpression();
+                return new UnaryOperationNode(operator, operand);
+            default:
+                throw new IOException("Unexpected token: " + currentSymbol.getType());
+        }
+    }
+
+    private ASTNode parseBinaryOperation() throws IOException {
+        ASTNode left = parsePrimaryExpression();
+        while (currentSymbol.getType() == Symbol.TokenType.OPERATOR) {
+            String operator = currentSymbol.getValue();
+            advance();
+            ASTNode right = parsePrimaryExpression();
+            left = new BinaryOperationNode(left, operator, right);
+        }
+        return left;
     }
 }
