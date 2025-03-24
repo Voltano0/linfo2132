@@ -1,0 +1,19 @@
+$ COMMENT This is a comment
+
+$ IDENTIFIER and KEYWORD
+int myVariable = 42;  $ INTEGER
+float myFloat = 3.14; $ FLOAT
+String myString = "Hello, World!"; $ STRING
+boolean myBoolean = true; $ BOOLEAN
+
+$ OPERATOR and PUNCTUATION
+myVariable += 00342; $ OPERATOR
+char punctuation = ";"; $ PUNCTUATION
+
+$ RECORD (Java record declaration)
+record Person(String name, int age) {} $ RECORD
+
+$ End of line (EOL) test
+System.out.println(myString); $ EOL should be detected here
+
+$ EOF (End of file marker should be handled by lexer implicitly)
