@@ -8,6 +8,8 @@ import java.io.FileReader;
 
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
+import compiler.Parser.ASTNode;
+import compiler.Parser.Parser;
 
 public class Compiler {
     public static void main(String[] args) {
@@ -26,6 +28,18 @@ public class Compiler {
                 while ((token = lexer.getNextSymbol()).getType() != Symbol.TokenType.EOF) {
                     System.out.println(token);
                 }
+            } catch (IOException e) {
+                System.err.println("Error reading file: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Unknown mode: " + mode);
+        }
+        if("-parser".equals(mode)){
+            try (FileReader reader = new FileReader(filepath)) {
+                Lexer lexer = new Lexer(reader);
+                Parser parser = new Parser(lexer);
+                ASTNode node = parser.parseProgram();
+                System.out.println(node);
             } catch (IOException e) {
                 System.err.println("Error reading file: " + e.getMessage());
             }

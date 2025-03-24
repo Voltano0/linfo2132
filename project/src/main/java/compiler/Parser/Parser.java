@@ -21,6 +21,9 @@ public class Parser {
         currentSymbol = lexer.getNextSymbol();
     }
     private void expect(Symbol.TokenType type) throws IOException {
+        if (currentSymbol.getType() == Symbol.TokenType.EOF){
+            return;
+        }
         if (currentSymbol.getType() != type) {
             throw new IOException("Expected " + type + " but found " + currentSymbol.getType());
         }
@@ -158,13 +161,13 @@ public class Parser {
                     expect(Symbol.TokenType.OPERATOR); // Expect ')'
                     return new FunctionCallNode(name, arguments);
                 } else {
-                    // Identifier
                     return new IdentifierNode(name);
                 }
-            case INTEGER:
+            case INTEGER, FLOAT:
                 Object value = currentSymbol.getValue();
                 advance();
                 return new LiteralNode(value);
+
             case OPERATOR:
                 if (currentSymbol.getValue().equals("(")) {
                     advance();
