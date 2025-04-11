@@ -1,5 +1,5 @@
 package compiler.Parser;
-
+import compiler.Semantic.*;
 import java.util.List;
 
 public class RecordDefinition extends ASTNode {
@@ -21,4 +21,16 @@ public class RecordDefinition extends ASTNode {
         }
         return sb.toString();
     }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+    public List<ASTNode> getFields() {
+        return fields;
+    }
+    public String getRecordName() {
+        return recordName;
+    }
 }
+

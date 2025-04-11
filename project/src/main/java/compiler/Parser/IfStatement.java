@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class IfStatement extends ASTNode {
     private ASTNode condition;
@@ -21,5 +22,20 @@ public class IfStatement extends ASTNode {
             sb.append(indent).append("  Else:\n").append(elseBlock.prettyPrint(indent + "    "));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getCondition() {
+        return condition;
+    }
+    public ASTNode getElseBlock() {
+        return elseBlock;
+    }
+    public ASTNode getThenBlock() {
+        return thenBlock;
     }
 }

@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class VariableDeclaration extends ASTNode {
     private String variableName;
@@ -21,5 +22,22 @@ public class VariableDeclaration extends ASTNode {
             sb.append(initializer.prettyPrint(indent + "    "));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getInitializer() {
+        return initializer;
+    }
+
+    public ASTNode getType() {
+        return type;
+    }
+
+    public String getVariableName() {
+        return variableName;
     }
 }

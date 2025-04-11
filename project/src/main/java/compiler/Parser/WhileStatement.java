@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class WhileStatement extends ASTNode {
     private ASTNode condition;
@@ -16,5 +17,18 @@ public class WhileStatement extends ASTNode {
         sb.append(indent).append("  Condition:\n").append(condition.prettyPrint(indent + "    ")).append("\n");
         sb.append(indent).append("  Block:\n").append(block.prettyPrint(indent + "    "));
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getBlock() {
+        return block;
+    }
+
+    public ASTNode getCondition() {
+        return condition;
     }
 }

@@ -1,5 +1,7 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
+import java.io.ObjectInputStream.GetField;
 import java.util.List;
 
 public class Block extends ASTNode {
@@ -17,5 +19,14 @@ public class Block extends ASTNode {
             sb.append(stmt.prettyPrint(indent + "  ")).append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public List<ASTNode> getStatements() {
+        return statements;
     }
 }

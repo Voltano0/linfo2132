@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class AssignmentStatement extends ASTNode {
     private ASTNode left;
@@ -17,4 +18,17 @@ public class AssignmentStatement extends ASTNode {
         sb.append(indent).append("  Right:\n").append(right.prettyPrint(indent + "    "));
         return sb.toString();
     }
+
+    @Override
+    public void accept(SemanticAnalysis v) {
+        v.visit(this);
+    }
+
+    public ASTNode getLeft() {
+        return left;
+    }
+    public ASTNode getRight() {
+        return right;
+    }
+
 }

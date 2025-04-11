@@ -9,6 +9,7 @@ import java.io.FileReader;
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
 import compiler.Parser.Parser;
+import compiler.Semantic.SemanticAnalysis;
 import compiler.Parser.ASTNode;
 
 
@@ -40,6 +41,26 @@ public class Compiler {
                 Parser parser = new Parser(lexer);
                 ASTNode node = parser.parseProgram();
                 System.out.println(node);
+            } catch (IOException e) {
+                System.err.println("Error reading file: " + e.getMessage());
+            } 
+        }
+        else if ("-semantic".equals(mode)) {
+            try (FileReader reader = new FileReader(filepath)) {
+                Lexer lexer = new Lexer(reader);
+                Parser parser = new Parser(lexer);
+                ASTNode node = parser.parseProgram();
+
+                // Perform semantic analysis
+                SemanticAnalysis semanticAnalysis = new SemanticAnalysis();
+                node.accept(semanticAnalysis);
+
+                if (semanticAnalysis.hasErrors()) {
+                    System.err.println("Semantic errors found:");
+                    semanticAnalysis.printErrors();
+                } else {
+                    System.out.println("Semantic analysis completed successfully.");
+                }
             } catch (IOException e) {
                 System.err.println("Error reading file: " + e.getMessage());
             }

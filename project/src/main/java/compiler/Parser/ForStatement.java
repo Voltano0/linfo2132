@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class ForStatement extends ASTNode {
     private String iterator;
@@ -25,4 +26,26 @@ public class ForStatement extends ASTNode {
         sb.append(indent).append("  Block:\n").append(block.prettyPrint(indent + "    "));
         return sb.toString();
     }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getBlock() {
+        return block;
+    }
+    public ASTNode getEndExpr() {
+        return endExpr;
+    }
+    public String getIterator() {
+        return iterator;
+    }
+    public ASTNode getStartExpr() {
+        return startExpr;
+    }
+    public ASTNode getStepExpr() {
+        return stepExpr;
+    }
+
 }

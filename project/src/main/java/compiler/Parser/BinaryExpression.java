@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class BinaryExpression extends ASTNode {
     private String operator;
@@ -19,5 +20,19 @@ public class BinaryExpression extends ASTNode {
         sb.append(indent).append("  Operator: ").append(operator).append("\n");
         sb.append(right.prettyPrint(indent + "  "));
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis v) {
+        v.visit(this);
+    }
+    public ASTNode getLeft() {
+        return left;
+    }
+    public String getOperator() {
+        return operator;
+    }
+    public ASTNode getRight() {
+        return right;
     }
 }

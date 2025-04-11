@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 public class ReturnStatement extends ASTNode {
     private ASTNode expression; // Optional; may be null
@@ -15,4 +16,14 @@ public class ReturnStatement extends ASTNode {
             return indent + "ReturnStatement";
         }
     }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getExpression() {
+        return expression;
+    }
 }
+

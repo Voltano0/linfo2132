@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.Semantic.*;
 
 import java.util.List;
 
@@ -20,5 +21,17 @@ public class FunctionCallExpression extends ASTNode {
             sb.append(arg.prettyPrint(indent + "    ")).append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public List<ASTNode> getArguments() {
+        return arguments;
+    }
+    public String getFunctionName() {
+        return functionName;
     }
 }

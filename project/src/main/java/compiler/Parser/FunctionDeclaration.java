@@ -1,5 +1,5 @@
 package compiler.Parser;
-
+import compiler.Semantic.*;
 import java.util.List;
 
 public class FunctionDeclaration extends ASTNode {
@@ -30,5 +30,23 @@ public class FunctionDeclaration extends ASTNode {
         sb.append(indent).append("  Body:\n");
         sb.append(body.prettyPrint(indent + "    "));
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public ASTNode getBody() {
+        return body;
+    }
+    public String getFunctionName() {
+        return functionName;
+    }
+    public List<ASTNode> getParameters() {
+        return parameters;
+    }
+    public ASTNode getReturnType() {
+        return returnType;
     }
 }

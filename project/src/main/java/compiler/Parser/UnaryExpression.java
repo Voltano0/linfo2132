@@ -1,4 +1,6 @@
 package compiler.Parser;
+import compiler.Semantic.*;
+
 
 public class UnaryExpression extends ASTNode {
     private String operator;
@@ -16,5 +18,18 @@ public class UnaryExpression extends ASTNode {
         sb.append(indent).append("  Operator: ").append(operator).append("\n");
         sb.append(expression.prettyPrint(indent + "  "));
         return sb.toString();
+    }
+
+    @Override
+    public void accept(SemanticAnalysis visitor) {
+        visitor.visit(this);
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+    
+    public ASTNode getExpression() {
+        return expression;
     }
 }
