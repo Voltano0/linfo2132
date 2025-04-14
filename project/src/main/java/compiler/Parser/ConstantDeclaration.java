@@ -3,10 +3,10 @@ import compiler.Semantic.*;
 
 public class ConstantDeclaration extends ASTNode {
     private String name;
-    private ASTNode type;
+    private TypeNode type;
     private ASTNode expression;
 
-    public ConstantDeclaration(String name, ASTNode type, ASTNode expression) {
+    public ConstantDeclaration(String name, TypeNode type, ASTNode expression) {
         this.name = name;
         this.type = type;
         this.expression = expression;
@@ -32,7 +32,7 @@ public class ConstantDeclaration extends ASTNode {
     public String getName() {
         return name;
     }
-    public ASTNode getType() {
+    public TypeNode getType() {
         return type;
     }
 }

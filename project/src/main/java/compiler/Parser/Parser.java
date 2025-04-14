@@ -84,7 +84,7 @@ public class Parser {
         expect(Symbol.TokenType.KEYWORD, "final");
         String name = currentSymbol.getValue();
         expect(Symbol.TokenType.IDENTIFIER);
-        ASTNode typeNode = parseType();
+        TypeNode typeNode = parseType();
         expect(Symbol.TokenType.OPERATOR, "=");
         ASTNode expr = parseExpression();
         expect(Symbol.TokenType.EOL);
@@ -117,7 +117,7 @@ public class Parser {
     private ASTNode parseVariableDeclaration() throws IOException {
         String varName = currentSymbol.getValue();
         expect(Symbol.TokenType.IDENTIFIER);
-        ASTNode typeNode = parseType();
+        TypeNode typeNode = parseType();
         ASTNode initializer = null;
         if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals("=")) {
             advance(); // consume '='
@@ -479,7 +479,7 @@ public class Parser {
 
     // Parse a type: base types (int, float, bool, string) or record types,
     // with an optional array indicator "[]".
-    private ASTNode parseType() throws IOException {
+    private TypeNode parseType() throws IOException {
         String typeName = "";
         if (currentSymbol.getType() == Symbol.TokenType.KEYWORD) {
             typeName = currentSymbol.getValue();

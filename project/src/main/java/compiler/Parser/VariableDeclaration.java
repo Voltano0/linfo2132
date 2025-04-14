@@ -3,10 +3,10 @@ import compiler.Semantic.*;
 
 public class VariableDeclaration extends ASTNode {
     private String variableName;
-    private ASTNode type;
+    private TypeNode type;
     private ASTNode initializer; // May be null
 
-    public VariableDeclaration(String variableName, ASTNode type, ASTNode initializer) {
+    public VariableDeclaration(String variableName, TypeNode type, ASTNode initializer) {
         this.variableName = variableName;
         this.type = type;
         this.initializer = initializer;
@@ -16,7 +16,7 @@ public class VariableDeclaration extends ASTNode {
     public String prettyPrint(String indent) {
         StringBuilder sb = new StringBuilder();
         sb.append(indent).append("VariableDeclaration: ").append(variableName).append("\n");
-        sb.append(indent).append("  Type: ").append(type.prettyPrint("")).append("\n");
+        sb.append(indent).append("  Type: ").append(type.prettyPrint(indent + "    ")).append("\n");
         if (initializer != null) {
             sb.append(indent).append("  Initializer:\n");
             sb.append(initializer.prettyPrint(indent + "    "));

@@ -6,8 +6,8 @@ import compiler.Parser.*;
 public class SemanticAnalysis implements ASTVisitor {
     private String currentType;
     private String currentFunctionType;
-    private Map<String, String> symbolTable = new HashMap<>();
-    private Map<String, List<String>> functionParameterTypes = new HashMap<>();
+    private final Map<String, String> symbolTable = new HashMap<>();
+    private final Map<String, List<String>> functionParameterTypes = new HashMap<>();
     private Map<String, List<String>> recordFieldTypes = new HashMap<>();
     private Set<String> validTypes = new HashSet<>(Arrays.asList("int", "boolean", "float", "string", "bool"));
     private List<String> errors = new ArrayList<>();
@@ -95,7 +95,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         String operator = node.getOperator();
 
-        
+
         if (operator.equals("+")) {
             // handle string concatenation
             if ("string".equals(leftType) && "string".equals(rightType)) {
@@ -165,7 +165,7 @@ public class SemanticAnalysis implements ASTVisitor {
     @Override
     public void visit(ConstantDeclaration node) {
         String name = node.getName();
-        ASTNode type = node.getType();
+        TypeNode type = node.getType();
         ASTNode initializer = node.getExpression();
 
         // check if the constant is already declared
@@ -183,8 +183,10 @@ public class SemanticAnalysis implements ASTVisitor {
         // validate the initializer
         initializer.accept(this);
         String initializerType = currentType;
-
-        if (!type.equals(initializerType)) {
+        if(Objects.equals(initializerType, "boolean")) {
+            initializerType = "bool";
+        }
+        if (!type.getTypeName().equals(initializerType)) {
             errors.add("Type mismatch in constant '" + name + "': expected " + type + ", but found " + initializerType);
             return;
         }
@@ -707,7 +709,7 @@ public class SemanticAnalysis implements ASTVisitor {
         }
 
         condition.accept(this);
-        if (currentType == null || !"boolean".equals(currentType)) {
+        if (!"boolean".equals(currentType)) {
             errors.add( "Condition in 'while' statement must be of type boolean");
         }
 

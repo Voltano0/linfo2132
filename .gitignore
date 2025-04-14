@@ -1,3 +1,7 @@
 /project/.gradle/
 /.idea/
 /project/build/
+/project/gradle
+/project/build.gradle.kts
+/project/settings.gradle.kts
+
