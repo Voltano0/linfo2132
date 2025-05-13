@@ -74,6 +74,8 @@ public class Parser {
         // Otherwise, assume a variable declaration (global variable)
         if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
             return parseVariableDeclaration();
+
+
         }
         throw new IOException("Unexpected token at top-level: " + currentSymbol);
     }
@@ -102,9 +104,9 @@ public class Parser {
         while (!(currentSymbol.getType() == Symbol.TokenType.OPERATOR &&
                 currentSymbol.getValue().equals("}"))) {
             // Each field: <type> <identifier> ;
-            ASTNode fieldType = parseType();
             String fieldName = currentSymbol.getValue();
             expect(Symbol.TokenType.IDENTIFIER);
+            ASTNode fieldType = parseType();
             expect(Symbol.TokenType.EOL);
             fields.add(new FieldDeclaration(fieldName, fieldType));
         }
@@ -129,15 +131,17 @@ public class Parser {
 
     // Parse a function declaration:
     //    fun <identifier> ( <parameter list> ) [<return type>] { <statements> }
-    private ASTNode parseFunctionDeclaration() throws IOException {
+    private FunctionDeclaration parseFunctionDeclaration() throws IOException {
         expect(Symbol.TokenType.KEYWORD, "fun");
         String functionName = currentSymbol.getValue();
         expect(Symbol.TokenType.IDENTIFIER);
         expect(Symbol.TokenType.OPERATOR, "(");
+
+
         List<ASTNode> parameters = parseParameterList();
         expect(Symbol.TokenType.OPERATOR, ")");
         // Optional return type: if the current token indicates a type, parse it.
-        ASTNode returnType = null;
+        TypeNode returnType = null;
         if ((currentSymbol.getType() == Symbol.TokenType.KEYWORD &&
                 (currentSymbol.getValue().equals("int") || currentSymbol.getValue().equals("float") ||
                         currentSymbol.getValue().equals("bool") || currentSymbol.getValue().equals("string"))) ||
@@ -164,9 +168,9 @@ public class Parser {
 
     // Parse a single parameter: <type> <identifier>
     private ASTNode parseParameter() throws IOException {
-        ASTNode typeNode = parseType();
         String paramName = currentSymbol.getValue();
         expect(Symbol.TokenType.IDENTIFIER);
+        ASTNode typeNode = parseType();
         return new Parameter(paramName, typeNode);
     }
 
@@ -481,6 +485,7 @@ public class Parser {
     // with an optional array indicator "[]".
     private TypeNode parseType() throws IOException {
         String typeName = "";
+
         if (currentSymbol.getType() == Symbol.TokenType.KEYWORD) {
             typeName = currentSymbol.getValue();
             advance();

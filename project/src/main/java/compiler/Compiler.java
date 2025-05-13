@@ -9,64 +9,38 @@ import java.io.FileReader;
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
 import compiler.Parser.Parser;
-import compiler.Semantic.SemanticAnalysis;
+import compiler.Semantic.*;
 import compiler.Parser.ASTNode;
-
 
 
 public class Compiler {
     public static void main(String[] args) {
-        if (args.length != 2) {
+        if (args.length != 1) {
             System.out.println("Usage: main.java -lexer <filepath>");
             return;
         }
 
-        String mode = args[0];
-        String filepath = args[1];
+        String filepath = args[0];
+        try (FileReader reader = new FileReader(filepath)) {
+            Lexer lexer = new Lexer(reader);
+            Parser parser = new Parser(lexer);
+            ASTNode node = parser.parseProgram();
 
-        if ("-lexer".equals(mode)) {
-            try (FileReader reader = new FileReader(filepath)) {
-                Lexer lexer = new Lexer(reader);
-                Symbol token;
-                while ((token = lexer.getNextSymbol()).getType() != Symbol.TokenType.EOF) {
-                    System.out.println(token);
-                }
-            } catch (IOException e) {
+            // Perform semantic analysis
+            SemanticAnalysis semanticAnalysis = new SemanticAnalysis();
+            node.accept(semanticAnalysis);
+
+            if (semanticAnalysis.hasErrors()) {
+                System.err.println("Semantic errors found:");
+                semanticAnalysis.printErrors();
+                System.exit(2);
+            } else {
+                System.out.println("Semantic analysis completed successfully.");
+            }
+        } catch (IOException e) {
                 System.err.println("Error reading file: " + e.getMessage());
             }
         }
-        else if("-parser".equals(mode)){
-            try (FileReader reader = new FileReader(filepath)) {
-                Lexer lexer = new Lexer(reader);
-                Parser parser = new Parser(lexer);
-                ASTNode node = parser.parseProgram();
-                System.out.println(node);
-            } catch (IOException e) {
-                System.err.println("Error reading file: " + e.getMessage());
-            } 
-        }
-        else if ("-semantic".equals(mode)) {
-            try (FileReader reader = new FileReader(filepath)) {
-                Lexer lexer = new Lexer(reader);
-                Parser parser = new Parser(lexer);
-                ASTNode node = parser.parseProgram();
 
-                // Perform semantic analysis
-                SemanticAnalysis semanticAnalysis = new SemanticAnalysis();
-                node.accept(semanticAnalysis);
-
-                if (semanticAnalysis.hasErrors()) {
-                    System.err.println("Semantic errors found:");
-                    semanticAnalysis.printErrors();
-                } else {
-                    System.out.println("Semantic analysis completed successfully.");
-                }
-            } catch (IOException e) {
-                System.err.println("Error reading file: " + e.getMessage());
-            }
-        } else {
-            System.out.println("Unknown mode: " + mode);
-        }
-
-    }
 }
+

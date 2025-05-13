@@ -5,10 +5,10 @@ import java.util.List;
 public class FunctionDeclaration extends ASTNode {
     private String functionName;
     private List<ASTNode> parameters;
-    private ASTNode returnType; // May be null for void functions
+    private TypeNode returnType; // May be null for void functions
     private ASTNode body;
 
-    public FunctionDeclaration(String functionName, List<ASTNode> parameters, ASTNode returnType, ASTNode body) {
+    public FunctionDeclaration(String functionName, List<ASTNode> parameters, TypeNode returnType, ASTNode body) {
         this.functionName = functionName;
         this.parameters = parameters;
         this.returnType = returnType;
@@ -46,7 +46,7 @@ public class FunctionDeclaration extends ASTNode {
     public List<ASTNode> getParameters() {
         return parameters;
     }
-    public ASTNode getReturnType() {
+    public TypeNode getReturnType() {
         return returnType;
     }
 }

@@ -138,169 +138,168 @@ Person rec{
 
 $ Global variables are initialised in the order in which they appear. 
 
-$ Variables always have an initialiser, which can be an expression. 
+$ Accessing a variable that is not initialised (for example, by calling a function in the initialiser expression)
 
-$ Accessing a variable that is not initialised (for example, by calling a function in the initialiser expression) 
+$ a function in the initialiser expression that accesses a global variable before it has been initialised results in undefined behaviour.
 
-$ a function in the initialiser expression that accesses a global variable before it has been initialised results in undefined behaviour. 
+a int = 3;
 
-a int = 3; 
+$ For arrays, only one-dimensional arrays are allowed.
 
-$ For arrays, only one-dimensional arrays are allowed. 
+$ To initialise array or record variables, they must be assigned to an existing record or array, or a new array or record must be created.
 
-$ To initialise array or record variables, they must be assigned to an existing record or array, or a new array or record must be created. 
+c int[] = array [5] of int;  $ new array of length 5
 
-c int[] = array [5] of int;  $ new array of length 5 
+d Person= Person("me", Point(3,7), array [i*2] of int);  $ new record
 
-d Person= Person("me", Point(3,7), array [i*2] of int);  $ new record 
 
-  
 
-$ Functions: 
+$ Functions:
 
-$ Functions have parameters and a return type. The return type 
+$ Functions have parameters and a return type. The return type
 
-$ can be a type or void (in which case nothing is indicated). 
+$ can be a type or void (in which case nothing is indicated).
 
-$ Base type arguments are always passed by value. 
+$ Base type arguments are always passed by value.
 
-$ Records and arrays are always passed by reference. 
+$ Records and arrays are always passed by reference.
 
-$ There are built-in functions for I/O: 
+$ There are built-in functions for I/O:
 
-$  readInt, readFloat, readString, writeInt, writeFloat, write, writeln 
+$  readInt, readFloat, readString, writeInt, writeFloat, write, writeln
 
-$ all "read" functions take nothing as argument, as they read for the standard input, and return the type specified. All “write” functions print on the standard output (they can be seen as print functions). 
+$ all "read" functions take nothing as argument, as they read for the standard input, and return the type specified. All “write” functions print on the standard output (they can be seen as print functions).
 
-$ "writeInt" and "writeFloat" take an "int" and "float" as argument respectively, and return nothing or True/False if it succeeded or not (to be decided at the code generation phase; for now you can make an arbitrary choice). 
+$ "writeInt" and "writeFloat" take an "int" and "float" as argument respectively, and return nothing or True/False if it succeeded or not (to be decided at the code generation phase; for now you can make an arbitrary choice).
 
-$ "write" and "writeln" can take anything as argument (including any primitive type). "writeln" will add an end-of-line at the end of what is written. The output is the same as the other "write" functions 
+$ "write" and "writeln" can take anything as argument (including any primitive type). "writeln" will add an end-of-line at the end of what is written. The output is the same as the other "write" functions
 
-$ Hint: writeFloat should accept “-a” as an argument, where “a” is a float variable.  
+$ Hint: writeFloat should accept “-a” as an argument, where “a” is a float variable.
 
-$ Function calls can forward-reference functions, even in initialisers of global 
+$ Function calls can forward-reference functions, even in initialisers of global
 
-$ variables, but not in constants. 
+$ variables, but not in constants.
 
-  
 
-$ Local variables: 
 
-$ Functions and while/if/else/for blocks can declare local variables and values 
+$ Local variables:
 
-$ mixed with statements. 
+$ Functions and while/if/else/for blocks can declare local variables and values
 
-$ Their initialisation follows the same rules as for global variables. 
+$ mixed with statements.
 
-  
+$ Their initialisation follows the same rules as for global variables.
 
-$ Scope: 
 
-$ Lexical scoping. 
 
-$ Local variables can shadow variables with the same name in surrounding scopes. 
+$ Scope:
 
-$ Keywords, types, functions, constants, and variables share one name space. 
+$ Lexical scoping.
 
-$ All names are case sensitive. 
+$ Local variables can shadow variables with the same name in surrounding scopes.
 
-  
+$ Keywords, types, functions, constants, and variables share one name space.
 
-$ Control structures: 
+$ All names are case sensitive.
 
-$ for, while, if/else 
 
-$ Control structures bodies are always block statements. 
 
-  
+$ Control structures:
 
-$ The left side of an assignment must be either: 
+$ for, while, if/else
 
-$    a variable 
+$ Control structures bodies are always block statements.
 
-$    an element of an array 
+$ "If" can be used with an "else" control block or without.
 
-$         a[3] = 1234;   $ a is an array of int 
+$ The "for" control structure takes four arguments : an initialised variable, the initial value of this variable, the maximum value of this variable, and the increment between each loop. It can be an integer, a float, or a double."
 
-$    a field access to a record such as: 
 
-$         a.x = 123; 
 
-$         a[3].x = 12; 
+$ The left side of an assignment must be either:
 
-$    To simplify the compiler, the left side cannot be an expression, this is not allowed: 
+$    a variable
 
-$         someFunctionThatReturnsAnArray()[2] = 2; 
+$    an element of an array
 
-$    Assigning an array or record copies the reference. 
+$         a[3] = 1234;   $ a is an array of int
 
- 
+$    a field access to a record such as:
 
-$ Deallocating arrays and records: 
+$         a.x = 123;
 
-$ We assume that there is no garbage collector and that the created 
+$         a[3].x = 12;
 
-$ arrays and records have to be manually deallocated when not needed anymore. 
+$    To simplify the compiler, the left side cannot be an expression, this is not allowed:
 
-$       x Point = Point(3,5); 
+$         someFunctionThatReturnsAnArray()[2] = 2;
 
-$       free x; 
+$    Assigning an array or record copies the reference.
 
-$ Accessing a deallocated array or record results in undefined behavior. 
 
-$ Deallocation is not deep. Before a record is deallocated, it is the duty 
 
-$ of the programmer to deallocate arrays or records referenced by that record. 
+$ Deallocating arrays and records:
 
-                                          
+$ We assume that there is no garbage collector and that the created
 
-fun square(int v) int { 
+$ arrays and records have to be manually deallocated when not needed anymore.
 
-    return v*v; 
+$       x Point = Point(3,5);
+
+$       free x;
+
+$ Accessing a deallocated array or record results in undefined behavior.
+
+$ Deallocation is not deep. Before a record is deallocated, it is the duty
+
+$ of the programmer to deallocate arrays or records referenced by that record.
+
+
+
+fun square(v int) int {
+
+    return v*v;
 
 }
 
 
 
+fun copyPoints(p Point[]) Point {
 
-  
+    return Point(p[0].x+p[1].x, p[0].y+p[1].y);
 
-fun copyPoints(Point[] p) Point { 
+}
 
-    return Point(p[0].x+p[1].x, p[0].y+p[1].y); 
 
-} 
 
-                             
+fun main() {
 
-fun main() { 
+    value int = readInt();
 
-    value int = readInt();                              
+    writeln(square(value));
 
-    writeln(square(value)); 
+    i int;
 
-    i int; 
+    for (i, 1, 100, 1) {
 
-    for (i, 1, 100, 1) { 
+        while (value!=3) {
 
-        while (value!=3) { 
+            if (i > 10){
 
-            if (i > 10){ 
+                $ ....
 
-                $ .... 
+            } else {
 
-            } else { 
+                $ ....
 
-                $ .... 
+            }
 
-            } 
+        }
 
-        } 
+    }
 
-    } 
 
-     
 
-    i = (i+2)*2; 
+    i = (i+2)*2;
 
-} 
+}

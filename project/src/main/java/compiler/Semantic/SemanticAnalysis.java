@@ -1,5 +1,6 @@
 package compiler.Semantic;
 
+import java.sql.SQLOutput;
 import java.util.*;
 import compiler.Parser.*;
 
@@ -11,7 +12,7 @@ public class SemanticAnalysis implements ASTVisitor {
     private Map<String, List<String>> recordFieldTypes = new HashMap<>();
     private Set<String> validTypes = new HashSet<>(Arrays.asList("int", "boolean", "float", "string", "bool"));
     private List<String> errors = new ArrayList<>();
-    private final Map<String, String> constants = new HashMap<>(); 
+    private final Map<String, String> constants = new HashMap<>();
 
 
     public SemanticAnalysis() {
@@ -35,7 +36,6 @@ public class SemanticAnalysis implements ASTVisitor {
         functionParameterTypes.put("chr", List.of("int"));
         functionParameterTypes.put("len", List.of("string"));
         functionParameterTypes.put("floor", List.of("float"));
-
         // add function return types
         functionParameterTypes.put("readInt", List.of());
         functionParameterTypes.put("readFloat", List.of());
@@ -43,8 +43,11 @@ public class SemanticAnalysis implements ASTVisitor {
         functionParameterTypes.put("writeln", List.of());
     }
 
+
+
     @Override
     public void visit(AssignmentStatement node) {
+
         // visit the left side 
         node.getLeft().accept(this);
         String leftType = currentType;
@@ -52,7 +55,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // Check if the left side is a variable
         if (leftType == null) {
-            errors.add("Variable '" + leftName + "' is not defined");
+            errors.add("ScopeError : Variable '" + leftName + "' is not defined");
             return;
         }
 
@@ -62,7 +65,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // Check if the right side is a valid type
         if (rightType == null) {
-            errors.add("Right-hand side of assignment is invalid or undefined");
+            errors.add("TypeError : Right-hand side of assignment is invalid or undefined");
             return;
         }
 
@@ -72,19 +75,20 @@ public class SemanticAnalysis implements ASTVisitor {
             String initializerElementType = rightType.substring(6, rightType.length() - 1); 
     
             if (!elementType.equals(initializerElementType)) {
-                errors.add("Mismatched types in array initialization: variable '" + leftName + "' is of type " + leftType + ", but assigned array contains elements of type " + initializerElementType);
+                errors.add("TypeError : Mismatched types in array initialization: variable '" + leftName + "' is of type " + leftType + ", but assigned array contains elements of type " + initializerElementType);
             }
             return;
         }
 
 
         if (!leftType.equals(rightType)) {
-            errors.add("Mismatched types in assignment: variable '" + leftName + "' is of type " + leftType + ", but assigned value is of type " + rightType);
+            errors.add("TypeError :Mismatched types in assignment: variable '" + leftName + "' is of type " + leftType + ", but assigned value is of type " + rightType);
         }
     }
 
     @Override
     public void visit(BinaryExpression node) {
+
         // visit the left node
         node.getLeft().accept(this);
         String leftType = currentType;
@@ -109,8 +113,8 @@ public class SemanticAnalysis implements ASTVisitor {
             } else if ("float".equals(leftType) && "float".equals(rightType)) {
                 currentType = "float";
             } else {
-                errors.add("Invalid types for '+' operator: " + leftType + " and " + rightType);
-                currentType = null; 
+                errors.add("OperatorError : Invalid types for '+' operator: " + leftType + " and " + rightType);
+                currentType = null;
             }
         } else if (operator.equals("-") || operator.equals("*") || operator.equals("/")) {
             // handle operations
@@ -121,24 +125,25 @@ public class SemanticAnalysis implements ASTVisitor {
             } else if ("float".equals(leftType) && "float".equals(rightType)) {
                 currentType = "float";
             } else {
-                errors.add("Invalid types for binary operator '" + operator + "': " + leftType + " and " + rightType);
-                currentType = null; 
+                errors.add("OperatorError : Invalid types for binary operator '" + operator + "': " + leftType + " and " + rightType);
+
+                currentType = null;
             }
         } else if (operator.equals("&&") || operator.equals("||")) {
             // handle logical operators
             if (!"boolean".equals(leftType) || !"boolean".equals(rightType)) {
-                errors.add("Invalid types for binary operator '" + operator + "': " + leftType + " and " + rightType);
+                errors.add("OperatorError : Invalid types for binary operator '" + operator + "': " + leftType + " and " + rightType);
             }
             currentType = "boolean";
         } else if (operator.equals("==") || operator.equals("!=") || operator.equals("<") || operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
             // handle comparison 
             if (!leftType.equals(rightType)) {
-                errors.add("Comparison operator '" + operator + "' requires operands of the same type, found: " + leftType + " and " + rightType);
+                errors.add("OperatorError : Comparison operator '" + operator + "' requires operands of the same type, found: " + leftType + " and " + rightType);
             }
             currentType = "boolean";
         } else {
             // unsupported operator
-            errors.add("Unsupported binary operator: " + operator);
+            errors.add("OperatorError : Unsupported binary operator: " + operator);
             currentType = null; 
         }
     }
@@ -162,6 +167,8 @@ public class SemanticAnalysis implements ASTVisitor {
         }
     }
 
+    // File: SemanticAnalysis.java
+// Language: java
     @Override
     public void visit(ConstantDeclaration node) {
         String name = node.getName();
@@ -170,37 +177,52 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the constant is already declared
         if (constants.containsKey(name)) {
-            errors.add("Constant '" + name + "' is already declared");
+            errors.add("ScopeError: Constant " + name + " is already declared");
             return;
         }
 
         // ensure the constant has an initializer
         if (initializer == null) {
-            errors.add("Constant '" + name + "' must be initialized at the time of declaration");
+            errors.add("TypeError: Constant " + name + " must be initialized at the time of declaration");
             return;
         }
 
         // validate the initializer
         initializer.accept(this);
         String initializerType = currentType;
-        if(Objects.equals(initializerType, "boolean")) {
+        if (Objects.equals(initializerType, "boolean")) {
             initializerType = "bool";
         }
+
+        // If the initializer is a function call, look up the function's return type
+        if (initializer instanceof FunctionCallExpression) {
+            String functionName = ((FunctionCallExpression) initializer).getFunctionName();
+            initializerType = symbolTable.get(functionName);
+            if (initializerType == null) {
+                errors.add("ScopeError: Function " + functionName + " is not defined");
+                return;
+            }
+        }
+
+        // Compare initializer type with the declared type
         if (!type.getTypeName().equals(initializerType)) {
-            errors.add("Type mismatch in constant '" + name + "': expected " + type + ", but found " + initializerType);
+            errors.add("TypeError: Type mismatch in constant " + name + ": expected " +
+                    type.getTypeName() + ", but found " + initializerType);
             return;
         }
 
-
-        type.accept(this); 
+        // Visit the type to set the currentType and save the final constant in global scope
+        type.accept(this);
         constants.put(name, currentType);
+        symbolTable.put(name, currentType);
     }
+
 
     @Override
     public void visit(ExpressionStatement node) {
         // check if the expression is null
         if (node.getExpression() == null) {
-            errors.add( "Expression statement contains a null expression");
+            errors.add( "TypeError : Expression statement contains a null expression");
             return;
         }
 
@@ -208,7 +230,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the expression has a valid type
         if (currentType == null) {
-            errors.add( "Expression statement has an invalid or undefined type");
+            errors.add( "TypeError : Expression statement has an invalid or undefined type");
         }
     }
 
@@ -225,13 +247,13 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the field type is null
         if (fieldType == null) {
-            errors.add( "Field '" + fieldName + "' has an invalid or missing type");
+            errors.add( "TypeError : Field '" + fieldName + "' has an invalid or missing type");
             return;
         }
 
         // check if the field is already defined
         if (symbolTable.containsKey(fieldName)) {
-            errors.add( "Field '" + fieldName + "' is already defined");
+            errors.add( "ScopeError : Field '" + fieldName + "' is already defined");
             return;
         }
 
@@ -250,13 +272,6 @@ public class SemanticAnalysis implements ASTVisitor {
             return;
         }
 
-        // check if the iterator is already defined
-        if (symbolTable.containsKey(iterator)) {
-            errors.add( "Iterator '" + iterator + "' is already defined in the current scope");
-            return;
-        }
-
-        symbolTable.put(iterator, "int");
 
         // check if the start, end, and step expressions are null
         if (node.getStartExpr() != null) {
@@ -290,9 +305,6 @@ public class SemanticAnalysis implements ASTVisitor {
         } else {
             errors.add( "For statement is missing a block");
         }
-
-        // remove the iterator from the symbol table
-        symbolTable.remove(iterator);
     }
 
     @Override
@@ -302,13 +314,13 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the operand type is null
         if (operandType == null) {
-            errors.add("Operand of 'free' statement is invalid or undefined");
+            errors.add("TypeError : Operand of 'free' statement is invalid or undefined");
             return;
         }
 
         // check if the operand type is an array or record
         if (!operandType.endsWith("[]") && !isRecordType(operandType)) {
-            errors.add("Operand of 'free' statement must be an array or record type, found: " + operandType);
+            errors.add("TypeError : Operand of 'free' statement must be an array or record type, found: " + operandType);
             return;
         }
     }
@@ -319,13 +331,13 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the function name is null
         if (functionName == null || functionName.isEmpty()) {
-            errors.add( "Function has an invalid or missing name");
+            errors.add( "TypeError : Function has an invalid or missing name");
             return;
         }
 
         // check if the function is already defined
         if (symbolTable.containsKey(functionName)) {
-            errors.add( "Function '" + functionName + "' is already defined");
+            errors.add( "ScopeError : Function '" + functionName + "' is already defined");
             return;
         }
 
@@ -343,14 +355,14 @@ public class SemanticAnalysis implements ASTVisitor {
         if (node.getReturnType() != null) {
             node.getReturnType().accept(this);
             if (currentType == null) {
-                errors.add( "Function '" + functionName + "' has an invalid return type");
+                errors.add( "ReturnError : Function '" + functionName + "' has an invalid return type");
                 return;
             }
             currentFunctionType = currentType;
         } else {
             currentFunctionType = "void";
         }
-
+        symbolTable.put(functionName, currentFunctionType);
         // check if the function has a body
         if (node.getBody() != null) {
             node.getBody().accept(this);
@@ -366,16 +378,29 @@ public class SemanticAnalysis implements ASTVisitor {
         String functionName = node.getFunctionName();
         // check if the function name is null
         if (!symbolTable.containsKey(functionName)) {
-            errors.add( "Function '" + functionName + "' is not defined");
+            errors.add("ScopeError : Function '" + functionName + "' is not defined");
+            currentType = null;
+            return;
+        }
+        if ("writeln".equals(functionName) || "write".equals(functionName)) {
+            List<ASTNode> arguments = node.getArguments();
+            for (ASTNode argument : arguments) {
+                if (argument == null) {
+                    errors.add("ArgumentError : 'writeln' cannot have null arguments");
+                    return;
+                }
+                argument.accept(this); // Validate the argument type
+            }
+            currentType = "void";
             return;
         }
 
         List<ASTNode> arguments = node.getArguments();
         List<String> parameterTypes = functionParameterTypes.get(functionName);
-
         // check if the function has parameters
-        if (parameterTypes == null || arguments.size() != parameterTypes.size()) {
-            errors.add( "Incorrect number of arguments for function '" + functionName + "'");
+        if (arguments.size() != parameterTypes.size()) {
+            errors.add( "ArgumentError : Incorrect number of arguments for function '" + functionName + "'");
+            currentType = null;
             return;
         }
 
@@ -383,7 +408,8 @@ public class SemanticAnalysis implements ASTVisitor {
         for (int i = 0; i < arguments.size(); i++) {
             arguments.get(i).accept(this);
             if (!currentType.equals(parameterTypes.get(i))) {
-                errors.add( "Argument type mismatch for function '" + functionName + "' at position " + i);
+                errors.add( "ArgumentError : Argument type mismatch for function '" + functionName + "' at position " + i);
+                return;
             }
         }
 
@@ -395,14 +421,15 @@ public class SemanticAnalysis implements ASTVisitor {
     public void visit(IfStatement node) {
         // check if the condition is null
         if (node.getCondition() == null) {
-            errors.add( "If statement is missing a condition");
+            errors.add( "MissingConditionError : If statement is missing a condition");
             return;
         }
 
         // visit the condition to determine its type
         node.getCondition().accept(this);
         if (!"boolean".equals(currentType)) {
-            errors.add( "Condition in 'if' statement must be of type boolean");
+            errors.add( "MissingConditionError : Condition in 'if' statement must be of type boolean");
+            return;
         }
 
         // check if the then block is null
@@ -419,9 +446,12 @@ public class SemanticAnalysis implements ASTVisitor {
     @Override
     public void visit(LiteralExpression node) {
         String value = node.getValue();
+        if(Objects.equals(value, "")) {
+            currentType = "string";
+        }
         // check if the value is null or empty
-        if (value == null || value.isEmpty()) {
-            errors.add( "LiteralExpression has an invalid or missing value");
+        if (value == null) {
+            errors.add( "TypeError : LiteralExpression has an invalid or missing value");
             currentType = null;
             return;
         }
@@ -433,7 +463,7 @@ public class SemanticAnalysis implements ASTVisitor {
             currentType = "float";
         } else if (value.equals("true") || value.equals("false")) {
             currentType = "boolean";
-        } else {
+        } else  {
             currentType = "string";
         }
     }
@@ -451,7 +481,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the parameter type is null
         if (typeNode == null) {
-            errors.add( "Parameter '" + paramName + "' has an invalid or missing type");
+            errors.add( "TypeError : Parameter '" + paramName + "' has an invalid or missing type");
             return;
         }
 
@@ -460,7 +490,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the parameter type is valid
         if (symbolTable.containsKey(paramName)) {
-            errors.add( "Parameter '" + paramName + "' is already defined in the current scope");
+            errors.add( "ScopeError : Parameter '" + paramName + "' is already defined in the current scope");
             return;
         }
 
@@ -493,26 +523,26 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the record name is null
         if (recordName == null || recordName.isEmpty()) {
-            errors.add( "RecordConstructorExpression has an invalid or missing record name");
+            errors.add( "RecordError : RecordConstructorExpression has an invalid or missing record name");
             return;
         }
 
         // check if the record name is already defined
         if (!symbolTable.containsKey(recordName)) {
-            errors.add( "Record '" + recordName + "' is not defined");
+            errors.add( "RecordError : Record '" + recordName + "' is not defined");
             return;
         }
 
         // check if the record name is a valid type
         List<String> expectedTypes = recordFieldTypes.get(recordName);
         if (expectedTypes == null) {
-            errors.add( "Record '" + recordName + "' has no defined fields");
+            errors.add( "RecordError : Record '" + recordName + "' has no defined fields");
             return;
         }
 
         // check if the number of arguments matches the expected types
         if (arguments.size() != expectedTypes.size()) {
-            errors.add( "Incorrect number of arguments for record '" + recordName + "'");
+            errors.add( "RecordError : Incorrect number of arguments for record '" + recordName + "'");
             return;
         }
 
@@ -521,7 +551,7 @@ public class SemanticAnalysis implements ASTVisitor {
             ASTNode argument = arguments.get(i);
             argument.accept(this);
             if (!currentType.equals(expectedTypes.get(i))) {
-                errors.add( "Argument type mismatch for record '" + recordName + "' at position " + i);
+                errors.add( "RecordError : Argument type mismatch for record '" + recordName + "' at position " + i);
             }
         }
 
@@ -535,13 +565,13 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the record name is null
         if (recordName == null || recordName.isEmpty()) {
-            errors.add( "Record has an invalid or missing name");
+            errors.add( "RecordError : Record has an invalid or missing name");
             return;
         }
 
         // check if the record name is already defined
         if (symbolTable.containsKey(recordName)) {
-            errors.add( "Record '" + recordName + "' is already defined");
+            errors.add( "RecordError : Record '" + recordName + "' is already defined");
             return;
         }
 
@@ -557,14 +587,14 @@ public class SemanticAnalysis implements ASTVisitor {
                 String fieldName = fieldNode.getFieldName();
                 // if the field name is null add error, else 
                 if (fieldNames.contains(fieldName)) {
-                    errors.add( "Duplicate field name '" + fieldName + "' in record '" + recordName + "'");
+                    errors.add( "RecordError :Duplicate field name '" + fieldName + "' in record '" + recordName + "'");
                 } else {
                     fieldNames.add(fieldName);
                     fieldNode.getType().accept(this);
                     fieldTypes.add(currentType);
                 }
             } else {
-                errors.add( "Invalid field in record '" + recordName + "'");
+                errors.add( "RecordError : Invalid field in record '" + recordName + "'");
             }
         }
         recordFieldTypes.put(recordName, fieldTypes);
@@ -574,7 +604,7 @@ public class SemanticAnalysis implements ASTVisitor {
     public void visit(ReturnStatement node) {
         // check if the return statement is inside a function
         if (currentFunctionType == null) {
-            errors.add( "Return statement outside of a function");
+            errors.add( "ReturnError : Return statement outside of a function");
             return;
         }
 
@@ -583,10 +613,10 @@ public class SemanticAnalysis implements ASTVisitor {
         if (expression != null) {
             expression.accept(this);
             if (!currentType.equals(currentFunctionType)) {
-                errors.add( "Return type mismatch: expected '" + currentFunctionType + "', found '" + currentType + "'");
+                errors.add( "ReturnError : Return type mismatch: expected '" + currentFunctionType + "', found '" + currentType + "'");
             }
         } else if (!"void".equals(currentFunctionType)) {
-            errors.add( "Missing return value for non-void function");
+            errors.add( "ReturnError : Missing return value for non-void function");
         }
     }
 
@@ -594,7 +624,7 @@ public class SemanticAnalysis implements ASTVisitor {
     public void visit(TypeNode node) {
         String typeName = node.getTypeName();
         if (typeName == null || typeName.isEmpty()) {
-            errors.add( "TypeNode has an invalid or missing type name");
+            errors.add( "TypeError : TypeNode has an invalid or missing type name");
             currentType = null;
             return;
         }
@@ -604,7 +634,7 @@ public class SemanticAnalysis implements ASTVisitor {
         }
 
         if (!validTypes.contains(typeName) && !symbolTable.containsKey(typeName)) {
-            errors.add( "Unknown type '" + typeName + "'");
+            errors.add( "TypeError : Unknown type '" + typeName + "'");
             currentType = null;
         } else {
             currentType = typeName;
@@ -617,7 +647,7 @@ public class SemanticAnalysis implements ASTVisitor {
         ASTNode expression = node.getExpression();
 
         if (expression == null) {
-            errors.add( "Unary expression contains a null expression");
+            errors.add( "TypeError : Unary expression contains a null expression");
             return;
         }
 
@@ -625,14 +655,14 @@ public class SemanticAnalysis implements ASTVisitor {
 
         if ("-".equals(operator) || "+".equals(operator)) {
             if (!"int".equals(currentType) && !"float".equals(currentType)) {
-                errors.add( "Unary operator '" + operator + "' requires an int or float operand, found '" + currentType + "'");
+                errors.add( "TypeError : Unary operator '" + operator + "' requires an int or float operand, found '" + currentType + "'");
             }
         } else if ("!".equals(operator)) {
             if (!"boolean".equals(currentType)) {
-                errors.add( "Unary operator '!' requires a boolean operand, found '" + currentType + "'");
+                errors.add( "TypeError : Unary operator '!' requires a boolean operand, found '" + currentType + "'");
             }
         } else {
-            errors.add("Unsupported unary operator: " + operator);
+            errors.add("TypeError : Unsupported unary operator: " + operator);
         }
     }
 
@@ -644,12 +674,12 @@ public class SemanticAnalysis implements ASTVisitor {
         ASTNode initializer = node.getInitializer();
 
         if (variableName == null || variableName.isEmpty()) {
-            errors.add( "Variable has an invalid or missing name");
+            errors.add( "TypeError : Variable has an invalid or missing name");
             return;
         }
 
         if (typeNode == null) {
-            errors.add( "Variable '" + variableName + "' has an invalid or missing type");
+            errors.add( "TypeError : Variable '" + variableName + "' has an invalid or missing type");
             return;
         }
         
@@ -658,19 +688,19 @@ public class SemanticAnalysis implements ASTVisitor {
         String variableType = currentType;
 
         if (variableType == null) {
-            errors.add( "Variable '" + variableName + "' has an invalid type");
+            errors.add( "TypeError : Variable '" + variableName + "' has an invalid type");
             return;
         }
 
         if (symbolTable.containsKey(variableName)) {
-            errors.add( "Variable '" + variableName + "' is already defined in the current scope");
+            errors.add( "TypeError : Variable '" + variableName + "' is already defined in the current scope");
             return;
         }
 
         if (initializer != null) {
             initializer.accept(this);
             if (currentType == null || !currentType.equals(variableType)) {
-                errors.add( "Initializer type '" + currentType + "' does not match variable type '" + variableType + "' for '" + variableName + "'");
+                errors.add( "TypeError : Initializer type '" + currentType + "' does not match variable type '" + variableType + "' for '" + variableName + "'");
             }
         }
 
@@ -683,20 +713,20 @@ public class SemanticAnalysis implements ASTVisitor {
         String variableName = node.getVariableName();
 
         if (variableName == null || variableName.isEmpty()) {
-            errors.add( "Variable expression has an invalid or missing name");
+            errors.add("ScopeError : Variable expression has an invalid or missing name");
             currentType = null;
-            return;
         }
 
         if (!symbolTable.containsKey(variableName)) {
-            errors.add( "Variable '" + variableName + "' is not defined");
+            errors.add( "ScopeError : Variable '" + variableName + "' is not defined");
             currentType = null;
-            return;
+
         }
 
 
         currentType = symbolTable.get(variableName);
     }
+
 
     @Override
     public void visit(WhileStatement node) {
@@ -704,13 +734,12 @@ public class SemanticAnalysis implements ASTVisitor {
         ASTNode block = node.getBlock();
 
         if (condition == null) {
-            errors.add( "While statement is missing a condition");
-            return;
+            errors.add( "MissingConditionError : While statement is missing a condition");
         }
 
         condition.accept(this);
         if (!"boolean".equals(currentType)) {
-            errors.add( "Condition in 'while' statement must be of type boolean");
+            errors.add( "MissingConditionError : Condition in 'while' statement must be of type boolean");
         }
 
         if (block != null) {
@@ -726,7 +755,7 @@ public class SemanticAnalysis implements ASTVisitor {
         String arrayType = currentType;
 
         if (!arrayType.endsWith("[]") && !"string".equals(arrayType)) {
-            errors.add("Index operator is not valid for type: " + arrayType);
+            errors.add("TypeError : Index operator is not valid for type: " + arrayType);
             currentType = null;
             return;
         }
@@ -735,7 +764,7 @@ public class SemanticAnalysis implements ASTVisitor {
         String indexType = currentType;
 
         if (!"int".equals(indexType)) {
-            errors.add("Index expression must be of type int, found: " + indexType);
+            errors.add("TypeError : Index expression must be of type int, found: " + indexType);
             currentType = null;
             return;
         }

@@ -9,42 +9,39 @@ import java.io.StringReader;
 
 public class TestSemantic {
     public static void main(String[] args) {
-        String source = ""
-                + "$ Test Parser Input\n"
-                + "\n"
-                + "final message string = \"Hello\";\n"
-                + "final run bool = true;\n"
-                + "\n"
-                + "Point rec {\n"
-                + "    int x;\n"
-                + "    int y;\n"
-                + "}\n"
-                + "\n"
-                + "a int = 3;\n"
-                + "\n"
-                + "fun square(int v) int {\n"
-                + "    return v * v;\n"
-                + "}\n"
-                + "\n"
-                + "fun main() {\n"
-                + "    value int = readInt();\n"
-                + "    Point p = Point(a, a + value);\n"
-                + "    writeInt(square(value));\n"
-                + "    writeln();\n"
-                + "    i int;\n"
-                + "    for (i, 1, a, 1) {\n"
-                + "        while (value != 0) {\n"
-                + "            if (run) {\n"
-                + "                value = value - 1;\n"
-                + "            } else {\n"
-                + "                write(message);\n"
-                + "            }\n"
-                + "        }\n"
-                + "    }\n"
-                + "    free p;\n"
-                + "    i = (i + 2) * 2;\n"
-                + "}\n";
-
+        String source = "$Good luck\n" +
+                "\n" +
+                "final message string = \"Hello\";\n" +
+                "final run bool = true;\n" +
+                "\n" +
+                "Point rec {\n" +
+                "    x int;\n" +
+                "    y int;\n" +
+                "}\n" +
+                "\n" +
+                "a int = 3;\n" +
+                "\n" +
+                "fun square(v int) int {\n" +
+                "    return v*v;\n" +
+                "}\n" +
+                "\n" +
+                "fun main() {\n" +
+                "    value int = readInt();\n" +
+                "    p Point = Point(a, a+value);\n" +
+                "    writeInt(square(value));\n" +
+                "    writeln(\"\");\n" +
+                "    i int;\n" +
+                "    for (i, 1, a, 1) {\n" +
+                "        while (value!=0) {\n" +
+                "            if (run){\n" +
+                "                value = value - 1;\n" +
+                "            } else {\n" +
+                "                write(message);\n" +
+                "            }\n" +
+                "        }\n" +
+                "    }\n" +
+                "    i = (i+2)*2;\n" +
+                "}";
         try {
             // lexical & pars
             StringReader reader = new StringReader(source);
@@ -53,6 +50,7 @@ public class TestSemantic {
             ASTNode node = parser.parseProgram();
 
             // Perform semantic analysis
+
             SemanticAnalysis semanticAnalysis = new SemanticAnalysis();
             node.accept(semanticAnalysis);
 
