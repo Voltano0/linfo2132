@@ -25,5 +25,8 @@ public interface ASTVisitor {
     void visit(VariableDeclaration node);
     void visit(VariableExpression node);
     void visit(WhileStatement node);
+
+    void visit(RecordDeclaration node);
+
     void visit(IndexExpression node);
 }

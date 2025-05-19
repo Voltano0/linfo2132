@@ -1,6 +1,5 @@
 package compiler.Semantic;
 
-import java.sql.SQLOutput;
 import java.util.*;
 import compiler.Parser.*;
 
@@ -749,6 +748,49 @@ public class SemanticAnalysis implements ASTVisitor {
             errors.add( "While statement is missing a block");
         }
     }
+
+    @Override
+    public void visit(RecordDeclaration node){
+        String recordName = node.getRecordName();
+        String variableName = node.getVariableName();
+        List<ASTNode> arguments = node.getArguments();
+
+        // check if the record name is null
+        if (recordName == null || recordName.isEmpty()) {
+            errors.add( "RecordError : RecordDeclaration has an invalid or missing record name");
+            return;
+        }
+
+        // check if the variable name is null
+        if (variableName == null || variableName.isEmpty()) {
+            errors.add( "RecordError : RecordDeclaration has an invalid or missing variable name");
+            return;
+        }
+
+        // check if the record name is already defined
+        if (!symbolTable.containsKey(recordName)) {
+            errors.add( "RecordError : Record '" + recordName + "' is not defined");
+            return;
+        }
+
+        // check if the number of arguments matches the expected types
+        if (arguments.size() != recordFieldTypes.get(recordName).size()) {
+            errors.add( "RecordError : Incorrect number of arguments for record '" + recordName + "'");
+            return;
+        }
+
+        // check if the argument types match the expected types
+        for (int i = 0; i < arguments.size(); i++) {
+            ASTNode argument = arguments.get(i);
+            argument.accept(this);
+            if (!currentType.equals(recordFieldTypes.get(recordName).get(i))) {
+                errors.add( "RecordError : Argument type mismatch for record '" + recordName + "' at position " + i);
+            }
+        }
+
+        currentType = recordName;
+    }
+
 
     @Override
     public void visit(IndexExpression node) {

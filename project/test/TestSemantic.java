@@ -15,19 +15,19 @@ public class TestSemantic {
                 "final run bool = true;\n" +
                 "\n" +
                 "Point rec {\n" +
-                "    int x;\n" +
-                "    int y;\n" +
+                "    x int;\n" +
+                "    y int;\n" +
                 "}\n" +
                 "\n" +
                 "a int = 3;\n" +
                 "\n" +
-                "fun square(int v) int {\n" +
+                "fun square(v int) int {\n" +
                 "    return v*v;\n" +
                 "}\n" +
                 "\n" +
                 "fun main() {\n" +
                 "    value int = readInt();\n" +
-                "    Point p = Point(a, a+value);\n" +
+                "    p Point = Point(a, a+value);\n" +
                 "    writeInt(square(value));\n" +
                 "    writeln(\"\");\n" +
                 "    i int;\n" +

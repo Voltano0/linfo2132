@@ -65,7 +65,6 @@ public class Parser {
         }
         // Record definition: first token is a RECORD (e.g. "Point")
         if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
-            System.out.println("Record definition: " + currentSymbol.getValue());
             return parseRecordDefinition();
         }
         // Function declaration: starts with keyword "fun"
@@ -104,10 +103,10 @@ public class Parser {
         List<ASTNode> fields = new ArrayList<>();
         while (!(currentSymbol.getType() == Symbol.TokenType.OPERATOR &&
                 currentSymbol.getValue().equals("}"))) {
-            // Each field: <type> <identifier> ;
-            ASTNode fieldType = parseType();
+            // Each field: <identifier> <type> ;
             String fieldName = currentSymbol.getValue();
             expect(Symbol.TokenType.IDENTIFIER);
+            ASTNode fieldType = parseType();
             expect(Symbol.TokenType.EOL);
             fields.add(new FieldDeclaration(fieldName, fieldType));
         }
@@ -115,11 +114,32 @@ public class Parser {
         return new RecordDefinition(recordName, fields);
     }
 
+    // Point p  = Point(1,2); format
+    private ASTNode parseRecordDeclaration() throws IOException{
+        String recordName = currentSymbol.getValue();
+        expect(Symbol.TokenType.RECORD); // consume record type name
+        String varName = currentSymbol.getValue();
+        expect(Symbol.TokenType.IDENTIFIER);
+        expect(Symbol.TokenType.OPERATOR, "=");
+        expect(Symbol.TokenType.RECORD); // consume record type name
+        expect(Symbol.TokenType.OPERATOR, "(");
+        List<ASTNode> arguments = new ArrayList<>();
+        if (!(currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(")"))) {
+            arguments.add(parseExpression());
+            while (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(",")) {
+                advance(); // consume ","
+                arguments.add(parseExpression());
+            }
+        }
+        expect(Symbol.TokenType.OPERATOR, ")");
+        expect(Symbol.TokenType.EOL);
+        return new RecordDeclaration(recordName, varName, arguments);
+    }
+
     // Parse a variable declaration:
     //    <identifier> <type> [= <expression>] ;
     private ASTNode parseVariableDeclaration() throws IOException {
         String varName = currentSymbol.getValue();
-        System.out.println("Variable declaration: " + varName);
         expect(Symbol.TokenType.IDENTIFIER);
         TypeNode typeNode = parseType();
         ASTNode initializer = null;
@@ -161,7 +181,6 @@ public class Parser {
             return parameters;
         }
         parameters.add(parseParameter());
-        expect(Symbol.TokenType.IDENTIFIER);
         while (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(",")) {
             advance(); // consume comma
             parameters.add(parseParameter());
@@ -171,8 +190,9 @@ public class Parser {
 
     // Parse a single parameter: <type> <identifier>
     private ASTNode parseParameter() throws IOException {
-        ASTNode typeNode = parseType();
         String paramName = currentSymbol.getValue();
+        expect(Symbol.TokenType.IDENTIFIER);
+        ASTNode typeNode = parseType();
         return new Parameter(paramName, typeNode);
     }
 
@@ -211,7 +231,7 @@ public class Parser {
         if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
             // If the lookahead token is an identifier, it's a variable declaration.
             if (nextSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
-                return parseVariableDeclaration();
+                return parseRecordDeclaration();
             }
             if(nextSymbol.getType() == Symbol.TokenType.KEYWORD && nextSymbol.getValue().equals("rec")) {
                 return parseRecordDefinition();
