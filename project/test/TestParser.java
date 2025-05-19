@@ -1,7 +1,8 @@
-package compiler.Parser;
-
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
+import compiler.Parser.Parser;
+import compiler.Parser.Program;
+
 import java.io.StringReader;
 import java.io.IOException;
 
@@ -29,7 +30,7 @@ public class TestParser {
                 + "    Point p = Point(a, a + value);\n"
                 + "    writeInt(square(value));\n"
                 + "    writeln();\n"
-                + "    i int;\n"
+                + "    i int = 2;\n"
                 + "    for (i, 1, a, 1) {\n"
                 + "        while (value != 0) {\n"
                 + "            if (run) {\n"

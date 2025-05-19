@@ -305,6 +305,7 @@ public class SemanticAnalysis implements ASTVisitor {
         } else {
             errors.add( "For statement is missing a block");
         }
+
     }
 
     @Override
@@ -718,7 +719,7 @@ public class SemanticAnalysis implements ASTVisitor {
         }
 
         if (!symbolTable.containsKey(variableName)) {
-            errors.add( "ScopeError : Variable '" + variableName + "' is not defined");
+            errors.add( "ScopeError : Variable '" + variableName + "' is not definedo");
             currentType = null;
 
         }

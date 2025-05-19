@@ -65,6 +65,7 @@ public class Parser {
         }
         // Record definition: first token is a RECORD (e.g. "Point")
         if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
+            System.out.println("Record definition: " + currentSymbol.getValue());
             return parseRecordDefinition();
         }
         // Function declaration: starts with keyword "fun"
@@ -104,9 +105,9 @@ public class Parser {
         while (!(currentSymbol.getType() == Symbol.TokenType.OPERATOR &&
                 currentSymbol.getValue().equals("}"))) {
             // Each field: <type> <identifier> ;
+            ASTNode fieldType = parseType();
             String fieldName = currentSymbol.getValue();
             expect(Symbol.TokenType.IDENTIFIER);
-            ASTNode fieldType = parseType();
             expect(Symbol.TokenType.EOL);
             fields.add(new FieldDeclaration(fieldName, fieldType));
         }
@@ -118,6 +119,7 @@ public class Parser {
     //    <identifier> <type> [= <expression>] ;
     private ASTNode parseVariableDeclaration() throws IOException {
         String varName = currentSymbol.getValue();
+        System.out.println("Variable declaration: " + varName);
         expect(Symbol.TokenType.IDENTIFIER);
         TypeNode typeNode = parseType();
         ASTNode initializer = null;
@@ -159,6 +161,7 @@ public class Parser {
             return parameters;
         }
         parameters.add(parseParameter());
+        expect(Symbol.TokenType.IDENTIFIER);
         while (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(",")) {
             advance(); // consume comma
             parameters.add(parseParameter());
@@ -168,9 +171,8 @@ public class Parser {
 
     // Parse a single parameter: <type> <identifier>
     private ASTNode parseParameter() throws IOException {
-        String paramName = currentSymbol.getValue();
-        expect(Symbol.TokenType.IDENTIFIER);
         ASTNode typeNode = parseType();
+        String paramName = currentSymbol.getValue();
         return new Parameter(paramName, typeNode);
     }
 
@@ -190,6 +192,7 @@ public class Parser {
     public ASTNode parseStatement() throws IOException {
         if (currentSymbol.getType() == Symbol.TokenType.KEYWORD) {
             String keyword = currentSymbol.getValue();
+            System.out.println("---------------"+ keyword);
             switch (keyword) {
                 case "if":
                     return parseIfStatement();
@@ -205,6 +208,18 @@ public class Parser {
                     break;
             }
         }
+        // If the current token is a record type, it could be a record constructor or a variable declaration.
+        if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
+            System.out.println("fghjkiuygfcvhjkjhgfdf");
+            // If the lookahead token is an identifier, it's a variable declaration.
+            if (nextSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
+                return parseVariableDeclaration();
+            }
+            if(nextSymbol.getType() == Symbol.TokenType.KEYWORD && nextSymbol.getValue().equals("rec")) {
+                return parseRecordDefinition();
+
+            }
+        }
         // Distinguish a local variable declaration from an assignment.
         if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
             // If the lookahead token is a type indicator then it's a declaration.
@@ -215,6 +230,7 @@ public class Parser {
                 return parseVariableDeclaration();
             }
         }
+
         // Otherwise, treat as an assignment or expression statement.
         return parseAssignmentOrExpressionStatement();
     }
