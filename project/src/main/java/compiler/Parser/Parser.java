@@ -192,7 +192,6 @@ public class Parser {
     public ASTNode parseStatement() throws IOException {
         if (currentSymbol.getType() == Symbol.TokenType.KEYWORD) {
             String keyword = currentSymbol.getValue();
-            System.out.println("---------------"+ keyword);
             switch (keyword) {
                 case "if":
                     return parseIfStatement();
@@ -210,7 +209,6 @@ public class Parser {
         }
         // If the current token is a record type, it could be a record constructor or a variable declaration.
         if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
-            System.out.println("fghjkiuygfcvhjkjhgfdf");
             // If the lookahead token is an identifier, it's a variable declaration.
             if (nextSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
                 return parseVariableDeclaration();
