@@ -28,4 +28,6 @@ public interface ASTVisitor {
     void visit(RecordDeclaration node);
 
     void visit(IndexExpression node);
+
+    void visit(FieldAccess node);
 }

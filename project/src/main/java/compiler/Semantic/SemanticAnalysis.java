@@ -9,6 +9,7 @@ public class SemanticAnalysis implements ASTVisitor {
     private final Map<String, String> symbolTable = new HashMap<>();
     private final Map<String, List<String>> functionParameterTypes = new HashMap<>();
     private Map<String, List<String>> recordFieldTypes = new HashMap<>();
+    private Map<String, List<String>> recordFieldNames = new HashMap<>();
     private Set<String> validTypes = new HashSet<>(Arrays.asList("int", "boolean", "float", "string", "bool"));
     private List<String> errors = new ArrayList<>();
     private final Map<String, String> constants = new HashMap<>();
@@ -149,6 +150,43 @@ public class SemanticAnalysis implements ASTVisitor {
         }
     }
 
+    @Override
+    public void visit(FieldAccess n){
+        String recordName = n.getVarname();
+        String fieldName = n.getRecArg();
+        //retrieve the type that goes with the field name
+        List<String> fieldTypes = recordFieldTypes.get(symbolTable.get(recordName));
+        List<String> fieldNames = recordFieldNames.get(symbolTable.get(recordName));
+        int index = fieldNames.indexOf(fieldName);
+        if (fieldTypes != null) {
+            n.setRecInType(new TypeNode(fieldTypes.get(index)));
+        }
+        TypeNode recType = n.getRecInType();
+        System.out.println("recType: " + recType);
+        if(recType == null) {
+            errors.add( "FieldAccess has an invalid or missing type");
+            return;
+        }
+        String type = n.getRecInType().getTypeName();
+        // check if the field name is null
+        if (fieldName == null || fieldName.isEmpty()) {
+            errors.add( "FieldAccess has an invalid or missing name");
+            return;
+        }
+
+        // check if the record name is null
+        if (recordName == null || recordName.isEmpty()) {
+            errors.add( "FieldAccess has an invalid or missing record name");
+            return;
+        }
+
+        if (!recordFieldNames.containsKey(symbolTable.get(recordName))) {
+            errors.add( "FieldAccess : Field '" + fieldName + "' is not defined in record '" + symbolTable.get(recordName) + "'");
+            return;
+        }
+        n.setRectype(symbolTable.get(recordName) );
+        currentType = recType.getTypeName();
+    }
 
     @Override
     public void visit(Block node) {
@@ -618,6 +656,7 @@ public class SemanticAnalysis implements ASTVisitor {
                 errors.add( "RecordError : Invalid field in record '" + recordName + "'");
             }
         }
+        recordFieldNames.put(recordName,new ArrayList<>(fieldNames) );
         recordFieldTypes.put(recordName, fieldTypes);
     }
 
@@ -779,6 +818,7 @@ public class SemanticAnalysis implements ASTVisitor {
         String variableName = node.getVariableName();
         List<ASTNode> arguments = node.getArguments();
 
+        //add the record name to the symbol table
         // check if the record name is null
         if (recordName == null || recordName.isEmpty()) {
             errors.add( "RecordError : RecordDeclaration has an invalid or missing record name");
@@ -819,6 +859,7 @@ public class SemanticAnalysis implements ASTVisitor {
             typeArguments.add(typeNode);
         }
         node.setTypeArguments(typeArguments);
+        symbolTable.put(variableName, recordName);
         currentType = recordName;
     }
 

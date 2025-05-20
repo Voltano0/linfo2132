@@ -6,7 +6,6 @@ fun main() {
   writeInt(sum);
   writeln("");
 
-  // now test nested while
   count int = readInt();
   while (count != 0) {
     writeInt(count);

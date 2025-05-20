@@ -3,7 +3,6 @@ fun add(a int, b int) int {
 }
 
 fun main() {
-  // expect 7
   writeInt(add(3, 4));
   writeln("");
 }

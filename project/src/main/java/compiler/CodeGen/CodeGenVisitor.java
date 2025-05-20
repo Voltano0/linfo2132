@@ -276,27 +276,30 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     @Override public void visit(RecordDeclaration node) {
-        String recName = node.getRecordName();       // e.g. "Point"
-        String varName = node.getVariableName();     // e.g. "p"
+        // 1) Allocate a slot for `p`
+        String varName = node.getVariableName();  // e.g. "p"
+        int slot = locals.size();
+        locals.put(varName, slot);
 
-        // 1) Allocate a new Record object
+        // 2) Emit `new Point(...)`
+        String recName = node.getRecordName();    // e.g. "Point"
         mv.visitTypeInsn(Opcodes.NEW, recName);
         mv.visitInsn(Opcodes.DUP);
 
-        // 2) Emit code for each constructor argument
-        //    (they must already be typed by semantic analysis)
+        // 3) Push each constructor argument
+        //    (these are your ASTNode expressions)
         for (ASTNode arg : node.getArguments()) {
             (arg).accept(this);
         }
 
-        // 3) Build the constructor descriptor "(T1T2…)V"
+        // 4) Build the ctor descriptor "(II)V" etc.
         StringBuilder ctorSig = new StringBuilder("(");
         for (TypeNode arg : node.getTypeArguments()) {
             ctorSig.append(desc(arg.getTypeName()));
         }
         ctorSig.append(")V");
 
-        // 4) Invoke the record’s <init> on the new+dup object
+        // 5) Invoke <init>
         mv.visitMethodInsn(
                 Opcodes.INVOKESPECIAL,
                 recName,
@@ -305,12 +308,8 @@ public class CodeGenVisitor implements ASTVisitor {
                 false
         );
 
-        // 5) Store the new record into the variable
-        if (locals.containsKey(varName)) {
-            // local slot
-            int slot = locals.get(varName);
-            mv.visitVarInsn(Opcodes.ASTORE, slot);
-        }
+        // 6) Store the new record into the local `p`
+        mv.visitVarInsn(Opcodes.ASTORE, slot);
     }
 
 
@@ -409,6 +408,34 @@ public class CodeGenVisitor implements ASTVisitor {
 
 
     @Override public void visit(IndexExpression node) {}
+
+    @Override
+    public void visit(FieldAccess node) {
+        String varName = node.getVarname();
+        String fieldName = node.getRecArg();
+        String recordType = node.getRectype();
+        String fieldDesc = desc(node.getRecInType().getTypeName());
+        if (locals.containsKey(varName)) {
+            mv.visitVarInsn(Opcodes.ALOAD, locals.get(varName));
+        } else {
+            // top‐level static record
+            mv.visitFieldInsn(
+                    Opcodes.GETSTATIC,
+                    className,
+                    varName,
+                    "L" + recordType + ";"      // descriptor for the record class
+            );
+        }
+
+        // 2) GETFIELD recordType.fieldName:fieldDesc
+        mv.visitFieldInsn(
+                Opcodes.GETFIELD,
+                recordType,
+                fieldName,
+                fieldDesc
+        );
+    }
+
     @Override public void visit(FreeStatement node) {}
     @Override public void visit(FunctionDeclaration node) {}
     @Override public void visit(RecordDefinition node) {}

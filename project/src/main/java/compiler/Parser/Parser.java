@@ -435,6 +435,8 @@ public class Parser {
     }
 
     private ASTNode parseUnary() throws IOException {
+        //deal with p.x format
+
         if (currentSymbol.getType() == Symbol.TokenType.OPERATOR &&
                 (currentSymbol.getValue().equals("-") || currentSymbol.getValue().equals("!"))) {
             String op = currentSymbol.getValue();
@@ -457,14 +459,23 @@ public class Parser {
             advance();
             return literal;
         }
+        if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER && nextSymbol.getType() == Symbol.TokenType.OPERATOR &&
+                nextSymbol.getValue().equals(".")) {
+            String varName = currentSymbol.getValue();
+            expect(Symbol.TokenType.IDENTIFIER);
+            advance();
+            String fieldName = currentSymbol.getValue();
+            expect(Symbol.TokenType.IDENTIFIER);
+            return new FieldAccess(varName, fieldName);
+        }
         // Variable reference or function call.
         // Now also accepting BUILTIN tokens.
-        if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER ||
+        else if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER ||
                 currentSymbol.getType() == Symbol.TokenType.BUILTIN) {
             String name = currentSymbol.getValue();
             advance();
             // Function call: identifier or builtin followed by "(".
-            if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals("(")) {
+            if (currentSymbol.getValue().equals("(")) {
                 advance(); // consume "("
                 List<ASTNode> arguments = new ArrayList<>();
                 if (!(currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(")"))) {
@@ -480,7 +491,7 @@ public class Parser {
             return new VariableExpression(name);
         }
         // Record constructor call: a record name (token type RECORD) optionally followed by "(".
-        if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
+        else if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
             String recordName = currentSymbol.getValue();
             advance();
             // If the next token is an opening parenthesis, it's a constructor call.
@@ -502,7 +513,7 @@ public class Parser {
             }
         }
         // Parenthesized expression.
-        if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals("(")) {
+        else if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals("(")) {
             advance(); // consume "("
             ASTNode expr = parseExpression();
             expect(Symbol.TokenType.OPERATOR, ")");

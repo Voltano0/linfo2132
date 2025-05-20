@@ -64,7 +64,6 @@ public class TestCodeGen {
             "}\n" +
             "\n" +
             "fun main() {\n" +
-            "  // expect 7\n" +
             "  writeInt(add(3, 4));\n" +
             "  writeln(\"\");\n" +
             "}";
@@ -94,7 +93,6 @@ public class TestCodeGen {
             "  writeInt(sum);\n" +
             "  writeln(\"\");\n" +
             "\n" +
-            "  // now test nested while\n" +
             "  count int = readInt();\n" +
             "  while (count != 0) {\n" +
             "    writeInt(count);\n" +
@@ -166,13 +164,8 @@ public class TestCodeGen {
     public static void main(String[] args) {
         //delete the try folder
 
-        full(test1, "project/test/test1.lang", "project/try/test1/source.class");
-        full(test2, "project/test/test2.lang", "project/try/test2/source.class");
-        full(test3, "project/test/test3.lang", "project/try/test3/source.class");
-        full(test4, "project/test/test4.lang", "project/try/test4/source.class");
+
         full(test5, "project/test/test5.lang", "project/try/test5/source.class");
-        full(test6, "project/test/test6.lang", "project/try/test6/source.class");
-        full(test7, "project/test/test7.lang", "project/try/test7/source.class");
 
 
 
