@@ -251,6 +251,50 @@ public class CodeGenVisitor implements ASTVisitor {
                 // mv.visitInsn(ICONST_1);
             }
 
+// --- NEW BUILT-INS ---
+            case "chr" -> {
+                // chr(int) -> String.valueOf((char)intVal)
+                node.getArguments().get(0).accept(this);
+                // cast int to char
+                mv.visitInsn(Opcodes.I2C);
+                // call String.valueOf(char)
+                mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        "java/lang/String",
+                        "valueOf",
+                        "(C)Ljava/lang/String;",
+                        false);
+            }
+            case "len" -> {
+                // len(stringOrArray)
+                ASTNode arg = node.getArguments().get(0);
+                arg.accept(this);
+                String t = (node.getParameterTypes().get(0)) ;
+                if (t.equals("string")) {
+                    // String.length()
+                    mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                            "java/lang/String",
+                            "length",
+                            "()I",
+                            false);
+                } else {
+                    // assume array: use ARRAYLENGTH
+                    mv.visitInsn(Opcodes.ARRAYLENGTH);
+                }
+            }
+            case "floor" -> {
+                // floor(float) -> (int)Math.floor((double)f)
+                node.getArguments().get(0).accept(this);
+                // float → double
+                mv.visitInsn(Opcodes.F2D);
+                // Math.floor(double) → double
+                mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        "java/lang/Math",
+                        "floor",
+                        "(D)D",
+                        false);
+                // double → int (truncates)
+                mv.visitInsn(Opcodes.D2I);
+            }
 
             // --- USER FUNCTIONS ---
             default -> {

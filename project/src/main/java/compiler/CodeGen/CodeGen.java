@@ -193,7 +193,7 @@ public class CodeGen {
         // no named parameters—but if you want to reference args, slot 0 holds the String[]
         HashMap<String, Integer> localSlots = new HashMap<>();
         int nextSlot = 1;                   // reserve slot 0 for args
-
+        localSlots.put("args",0);
         // if you even want to reference "args", you can:
         // localSlots.put("args", 0);
 

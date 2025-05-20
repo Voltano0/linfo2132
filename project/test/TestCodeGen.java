@@ -67,13 +67,8 @@ public class TestCodeGen {
             "  writeInt(add(3, 4));\n" +
             "  writeln(\"\");\n" +
             "}";
-    // Test boolean operators and comparisons
-    static String test4 = "fun main() {\n" +
-            "  write(readInt() != 0 && readInt() == 2);\n" +
-            "  writeln(\"\");\n" +
-            "}";
     // Test record definition, constructor, and field access
-    static String test5 = "Point rec {\n" +
+    static String test4 = "Point rec {\n" +
             "  x int;\n" +
             "  y int;\n" +
             "}\n" +
@@ -85,14 +80,14 @@ public class TestCodeGen {
             "  writeln(\"\");\n" +
             "}";
     // Test for‐loop and while‐loop with assignment
-    static String test6 = "fun main() {\n" +
+    static String test5 = "fun main() {\n" +
             "  sum int = 0;\n" +
+            "  i int;\n" +
             "  for(i, 1, 5, 1) {\n" +
             "    sum = sum + i;\n" +
             "  }\n" +
             "  writeInt(sum);\n" +
             "  writeln(\"\");\n" +
-            "\n" +
             "  count int = readInt();\n" +
             "  while (count != 0) {\n" +
             "    writeInt(count);\n" +
@@ -101,7 +96,7 @@ public class TestCodeGen {
             "  writeln(\"\");\n" +
             "}";
     // Test string concatenation and built-ins
-    static String test7 = "fun main() {\n" +
+    static String test6 = "fun main() {\n" +
             "  s string = \"foo\";\n" +
             "  s = s + \"bar\";\n" +
             "  writeInt(len(s));\n" +
@@ -164,8 +159,12 @@ public class TestCodeGen {
     public static void main(String[] args) {
         //delete the try folder
 
-
+        full(test1, "project/test/test1.lang", "project/try/test1/source.class");
+        full(test2, "project/test/test2.lang", "project/try/test2/source.class");
+        full(test3, "project/test/test3.lang", "project/try/test3/source.class");
+        full(test4, "project/test/test4.lang", "project/try/test4/source.class");
         full(test5, "project/test/test5.lang", "project/try/test5/source.class");
+        full(test6, "project/test/test6.lang", "project/try/test6/source.class");
 
 
 

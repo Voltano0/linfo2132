@@ -1,4 +1,0 @@
-fun main() {
-  write("hello");
-  writeln("");
-}
