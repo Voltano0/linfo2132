@@ -1,0 +1,4 @@
+fun main() {
+  write(readInt() != 0 && readInt() == 2);
+  writeln("");
+}

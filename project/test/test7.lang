@@ -1,0 +1,6 @@
+fun main() {
+  s string = "foo";
+  s = s + "bar";
+  writeInt(len(s));
+  writeln("");
+}

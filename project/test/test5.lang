@@ -1,0 +1,11 @@
+Point rec {
+  x int;
+  y int;
+}
+
+fun main() {
+  p Point = Point(5, 9);
+  writeInt(p.x);
+  writeInt(p.y);
+  writeln("");
+}

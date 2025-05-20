@@ -3,7 +3,9 @@ import compiler.Parser.ASTNode;
 import compiler.Parser.Parser;
 import compiler.Parser.Program;
 import compiler.Semantic.SemanticAnalysis;
+import compiler.CodeGen.CodeGen;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 
@@ -59,6 +61,7 @@ public class TestSemantic {
                 semanticAnalysis.printErrors();
             } else {
                 System.out.println("Semantic analysis completed successfully.");
+                // You can add code generation here if needed
             }
         } catch (IOException e) {
             e.printStackTrace();
