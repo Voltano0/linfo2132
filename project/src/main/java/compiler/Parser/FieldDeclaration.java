@@ -1,11 +1,12 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class FieldDeclaration extends ASTNode {
     private String fieldName;
-    private ASTNode type;
+    private TypeNode type;
 
-    public FieldDeclaration(String fieldName, ASTNode type) {
+    public FieldDeclaration(String fieldName, TypeNode type) {
         this.fieldName = fieldName;
         this.type = type;
     }
@@ -16,14 +17,14 @@ public class FieldDeclaration extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 
     public String getFieldName() {
         return fieldName;
     }
-    public ASTNode getType() {
+    public TypeNode getType() {
         return type;
     }
 }

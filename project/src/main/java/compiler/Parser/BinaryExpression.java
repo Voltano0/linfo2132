@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class BinaryExpression extends ASTNode {
@@ -21,9 +22,8 @@ public class BinaryExpression extends ASTNode {
         sb.append(right.prettyPrint(indent + "  "));
         return sb.toString();
     }
-
     @Override
-    public void accept(SemanticAnalysis v) {
+    public void accept(ASTVisitor v) {
         v.visit(this);
     }
     public ASTNode getLeft() {

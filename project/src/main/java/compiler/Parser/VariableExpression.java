@@ -1,8 +1,10 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class VariableExpression extends ASTNode {
     private String variableName;
+    private TypeNode type;
 
     public VariableExpression(String variableName) {
         this.variableName = variableName;
@@ -14,11 +16,18 @@ public class VariableExpression extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 
     public String getVariableName() {
         return variableName;
+    }
+
+    public void setType(TypeNode type) {
+        this.type = type;
+    }
+    public TypeNode getType() {
+        return type;
     }
 }

@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class FreeStatement extends ASTNode {
@@ -14,7 +15,7 @@ public class FreeStatement extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 

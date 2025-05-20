@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 
@@ -21,9 +22,10 @@ public class UnaryExpression extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
+
 
     public String getOperator() {
         return operator;

@@ -1,11 +1,12 @@
 package compiler.Parser;
-import compiler.Semantic.*; 
+import compiler.CodeGen.CodeGenVisitor;
+import compiler.Semantic.*;
 
 public class Parameter extends ASTNode {
     private String parameterName;
-    private ASTNode type;
+    private TypeNode type;
 
-    public Parameter(String parameterName, ASTNode type) {
+    public Parameter(String parameterName, TypeNode type) {
         this.parameterName = parameterName;
         this.type = type;
     }
@@ -16,14 +17,14 @@ public class Parameter extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
 
     public String getParameterName() {
         return parameterName;
     }
-    public ASTNode getType() {
+    public TypeNode getType() {
         return type;
     }
 }

@@ -3,30 +3,37 @@
  */
 package compiler;
 
-import java.io.IOException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Paths;
 
 import compiler.Lexer.Lexer;
-import compiler.Lexer.Symbol;
-import compiler.Parser.Parser;
-import compiler.Semantic.*;
 import compiler.Parser.ASTNode;
-
+import compiler.Parser.Parser;
+import compiler.Parser.Program;
+import compiler.Semantic.SemanticAnalysis;
+import compiler.CodeGen.CodeGen;
 
 public class Compiler {
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: main.java -lexer <filepath>");
-            return;
-        }
 
-        String filepath = args[0];
-        try (FileReader reader = new FileReader(filepath)) {
+        String srcPath = args[0];
+        // default output class file
+        String outPath = "Main.class";
+        // scan for -o
+        for (int i = 1; i < args.length; i++) {
+            if ("-o".equals(args[i]) && i + 1 < args.length) {
+                outPath = args[++i];
+            }
+        }
+        try (FileReader reader = new FileReader(srcPath)) {
             Lexer lexer = new Lexer(reader);
+
+
             Parser parser = new Parser(lexer);
             ASTNode node = parser.parseProgram();
 
-            // Perform semantic analysis
+            // Perform sema// n// tic analysis
             SemanticAnalysis semanticAnalysis = new SemanticAnalysis();
             node.accept(semanticAnalysis);
 
@@ -36,11 +43,31 @@ public class Compiler {
                 System.exit(2);
             } else {
                 System.out.println("Semantic analysis completed successfully.");
+                java.nio.file.Path parent = Paths.get(outPath).getParent();
+                if (parent != null && !java.nio.file.Files.exists(parent)) {
+                    java.nio.file.Files.createDirectories(parent);
+                }
+                // invoke your CodeGen
+                new CodeGen((Program) node, outPath).generate();
+                System.out.println("Code generation successful → " + outPath);
+                System.exit(0);
             }
         } catch (IOException e) {
-                System.err.println("Error reading file: " + e.getMessage());
-            }
+            System.err.println("Error reading file: " + e.getMessage());
+            e.printStackTrace(System.err);
+            System.exit(1);
         }
-
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
 

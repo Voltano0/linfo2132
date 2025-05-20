@@ -106,7 +106,7 @@ public class Parser {
             // Each field: <identifier> <type> ;
             String fieldName = currentSymbol.getValue();
             expect(Symbol.TokenType.IDENTIFIER);
-            ASTNode fieldType = parseType();
+            TypeNode fieldType = parseType();
             expect(Symbol.TokenType.EOL);
             fields.add(new FieldDeclaration(fieldName, fieldType));
         }
@@ -116,10 +116,11 @@ public class Parser {
 
     // Point p  = Point(1,2); format
     private ASTNode parseRecordDeclaration() throws IOException{
-        String recordName = currentSymbol.getValue();
-        expect(Symbol.TokenType.RECORD); // consume record type name
         String varName = currentSymbol.getValue();
-        expect(Symbol.TokenType.IDENTIFIER);
+
+        expect(Symbol.TokenType.IDENTIFIER); // consume record type name
+        String recordName = currentSymbol.getValue();
+        expect(Symbol.TokenType.RECORD);
         expect(Symbol.TokenType.OPERATOR, "=");
         expect(Symbol.TokenType.RECORD); // consume record type name
         expect(Symbol.TokenType.OPERATOR, "(");
@@ -160,7 +161,7 @@ public class Parser {
         expect(Symbol.TokenType.OPERATOR, "(");
 
 
-        List<ASTNode> parameters = parseParameterList();
+        List<Parameter> parameters = parseParameterList();
         expect(Symbol.TokenType.OPERATOR, ")");
         // Optional return type: if the current token indicates a type, parse it.
         TypeNode returnType = null;
@@ -175,8 +176,8 @@ public class Parser {
     }
 
     // Parse a parameter list: zero or more parameters separated by commas.
-    private List<ASTNode> parseParameterList() throws IOException {
-        List<ASTNode> parameters = new ArrayList<>();
+    private List<Parameter> parseParameterList() throws IOException {
+        List<Parameter> parameters = new ArrayList<>();
         if (currentSymbol.getType() == Symbol.TokenType.OPERATOR && currentSymbol.getValue().equals(")")) {
             return parameters;
         }
@@ -189,10 +190,10 @@ public class Parser {
     }
 
     // Parse a single parameter: <type> <identifier>
-    private ASTNode parseParameter() throws IOException {
+    private Parameter parseParameter() throws IOException {
         String paramName = currentSymbol.getValue();
         expect(Symbol.TokenType.IDENTIFIER);
-        ASTNode typeNode = parseType();
+        TypeNode typeNode = parseType();
         return new Parameter(paramName, typeNode);
     }
 
@@ -228,14 +229,10 @@ public class Parser {
             }
         }
         // If the current token is a record type, it could be a record constructor or a variable declaration.
-        if (currentSymbol.getType() == Symbol.TokenType.RECORD) {
+        if (currentSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
             // If the lookahead token is an identifier, it's a variable declaration.
-            if (nextSymbol.getType() == Symbol.TokenType.IDENTIFIER) {
+            if (nextSymbol.getType() == Symbol.TokenType.RECORD) {
                 return parseRecordDeclaration();
-            }
-            if(nextSymbol.getType() == Symbol.TokenType.KEYWORD && nextSymbol.getValue().equals("rec")) {
-                return parseRecordDefinition();
-
             }
         }
         // Distinguish a local variable declaration from an assignment.
@@ -498,7 +495,7 @@ public class Parser {
                     }
                 }
                 expect(Symbol.TokenType.OPERATOR, ")");
-                return new RecordConstructorExpression(recordName, arguments);
+                return new RecordDefinition(recordName, arguments);
             } else {
                 // Not a constructor call: treat it as a variable reference.
                 return new VariableExpression(recordName);

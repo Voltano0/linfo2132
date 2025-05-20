@@ -13,6 +13,8 @@ public class SemanticAnalysis implements ASTVisitor {
     private List<String> errors = new ArrayList<>();
     private final Map<String, String> constants = new HashMap<>();
 
+    // hasmap to store function names and their types
+    private final Map<String, TypeNode> functionsReturnType = new HashMap<>();
 
     public SemanticAnalysis() {
 
@@ -228,6 +230,7 @@ public class SemanticAnalysis implements ASTVisitor {
         node.getExpression().accept(this);
 
         // check if the expression has a valid type
+        node.setType(currentType);
         if (currentType == null) {
             errors.add( "TypeError : Expression statement has an invalid or undefined type");
         }
@@ -328,7 +331,7 @@ public class SemanticAnalysis implements ASTVisitor {
     @Override
     public void visit(FunctionDeclaration node) {
         String functionName = node.getFunctionName();
-
+        functionsReturnType.put(functionName, node.getReturnType());
         // check if the function name is null
         if (functionName == null || functionName.isEmpty()) {
             errors.add( "TypeError : Function has an invalid or missing name");
@@ -382,6 +385,14 @@ public class SemanticAnalysis implements ASTVisitor {
             currentType = null;
             return;
         }
+        //check if the function name is in the functionReturnType hasmap and set the currentType
+        if (functionsReturnType.containsKey(functionName)) {
+            node.setReturnType(functionsReturnType.get(functionName));
+        } else {
+            currentType = symbolTable.get(functionName);
+        }
+
+
         if ("writeln".equals(functionName) || "write".equals(functionName)) {
             List<ASTNode> arguments = node.getArguments();
             for (ASTNode argument : arguments) {
@@ -397,6 +408,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         List<ASTNode> arguments = node.getArguments();
         List<String> parameterTypes = functionParameterTypes.get(functionName);
+        node.setParameterTypes(parameterTypes);
         // check if the function has parameters
         if (arguments.size() != parameterTypes.size()) {
             errors.add( "ArgumentError : Incorrect number of arguments for function '" + functionName + "'");
@@ -446,8 +458,13 @@ public class SemanticAnalysis implements ASTVisitor {
     @Override
     public void visit(LiteralExpression node) {
         String value = node.getValue();
+        //check the value inside the symbol table
+        if (symbolTable.containsKey(value)) {
+            node.setType(symbolTable.get(value));
+        }
         if(Objects.equals(value, "")) {
             currentType = "string";
+            node.setType(currentType);
         }
         // check if the value is null or empty
         if (value == null) {
@@ -459,12 +476,16 @@ public class SemanticAnalysis implements ASTVisitor {
         // check if the value is a string
         if (value.matches("-?\\d+")) {
             currentType = "int";
+            node.setType(currentType);
         } else if (value.matches("-?\\d*\\.\\d+")) {
             currentType = "float";
+            node.setType(currentType);
         } else if (value.equals("true") || value.equals("false")) {
             currentType = "boolean";
+            node.setType(currentType);
         } else  {
             currentType = "string";
+            node.setType(currentType);
         }
     }
 
@@ -610,6 +631,8 @@ public class SemanticAnalysis implements ASTVisitor {
 
         // check if the return statement has an expression
         ASTNode expression = node.getExpression();
+        node.setReturnType(new TypeNode(currentFunctionType));
+
         if (expression != null) {
             expression.accept(this);
             if (!currentType.equals(currentFunctionType)) {
@@ -725,6 +748,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
 
         currentType = symbolTable.get(variableName);
+        node.setType(new TypeNode(currentType));
     }
 
 
@@ -790,6 +814,7 @@ public class SemanticAnalysis implements ASTVisitor {
 
         currentType = recordName;
     }
+
 
 
     @Override

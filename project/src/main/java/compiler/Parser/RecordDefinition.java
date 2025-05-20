@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 import java.util.List;
 
@@ -23,9 +24,10 @@ public class RecordDefinition extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
+
     public List<ASTNode> getFields() {
         return fields;
     }

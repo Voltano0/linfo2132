@@ -1,5 +1,6 @@
 package compiler.Parser;
 
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class IndexExpression extends ASTNode {
@@ -24,7 +25,7 @@ public class IndexExpression extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis v) {
+    public void accept(ASTVisitor v) {
         v.visit(this);
     }
 

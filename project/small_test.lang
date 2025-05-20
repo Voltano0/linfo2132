@@ -2,6 +2,7 @@ $Good luck
 
 final message string = "Hello";
 final run bool = true;
+final k int = 3;
 
 Point rec {
     x int;
@@ -9,6 +10,8 @@ Point rec {
 }
 
 a int = 3;
+b float = 2.0;
+
 
 fun square(v int) int {
     return v*v;

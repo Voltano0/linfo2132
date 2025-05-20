@@ -1,4 +1,5 @@
 package compiler.Parser;
+import compiler.CodeGen.CodeGenVisitor;
 import compiler.Semantic.*;
 
 public class TypeNode extends ASTNode {
@@ -14,10 +15,15 @@ public class TypeNode extends ASTNode {
     }
 
     @Override
-    public void accept(SemanticAnalysis visitor) {
+    public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
     public String getTypeName() {
         return typeName;
+    }
+
+
+    public boolean isIntOrBool() {
+        return typeName.equals("int") || typeName.equals("bool");
     }
 }
