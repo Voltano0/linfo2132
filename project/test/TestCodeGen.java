@@ -60,7 +60,7 @@ public class TestCodeGen {
                 System.out.println("Semantic analysis completed successfully.");
 
                 //code generation
-                // Assuming you have a CodeGenerator class
+                //Assuming you have a CodeGenerator class
                 // CodeGenerator codeGen = new CodeGenerator();
                 // String generatedCode = codeGen.generate(node);
                 // System.out.println("Generated Code:");

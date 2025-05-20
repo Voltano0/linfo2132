@@ -22,7 +22,9 @@ public class TypeNode extends ASTNode {
         return typeName;
     }
 
-
+    public boolean isWide() {
+        return "long".equals(typeName) || "double".equals(typeName);
+    }
     public boolean isIntOrBool() {
         return typeName.equals("int") || typeName.equals("bool");
     }

@@ -8,6 +8,7 @@ public class RecordDeclaration extends ASTNode{
     private String recordName;
     private String variableName;
     private List<ASTNode> arguments;
+    private List<TypeNode> typeArguments;
 
     public RecordDeclaration(String recordName, String variableName, List<ASTNode> arguments) {
         this.recordName = recordName;
@@ -35,6 +36,12 @@ public class RecordDeclaration extends ASTNode{
             sb.append(arg.prettyPrint(indent + "    ")).append("\n");
         }
         return sb.toString();
+    }
+    public void setTypeArguments(List<TypeNode> typeArguments) {
+        this.typeArguments = typeArguments;
+    }
+    public List<TypeNode> getTypeArguments() {
+        return typeArguments;
     }
 
     @Override

@@ -5,6 +5,8 @@ package compiler;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import compiler.Lexer.Lexer;
@@ -18,14 +20,37 @@ public class Compiler {
     public static void main(String[] args) {
 
         String srcPath = args[0];
-        // default output class file
-        String outPath = "Main.class";
+        Path src = Paths.get(srcPath);
+
+        String outPath = null;
         // scan for -o
         for (int i = 1; i < args.length; i++) {
             if ("-o".equals(args[i]) && i + 1 < args.length) {
                 outPath = args[++i];
             }
         }
+        if (outPath == null) {
+            // no -o: place Class in the same directory as src
+            Path parent = src.getParent();
+            if (parent == null) parent = Paths.get(".");
+            String baseName = src.getFileName().toString();
+            if (baseName.endsWith(".lang")) {
+                baseName = baseName.substring(0, baseName.length() - 5);
+            }
+            outPath = parent.resolve(baseName + ".class").toString();
+        }
+        // 2) Ensure output directory exists
+        Path target = Paths.get(outPath);
+        Path targetDir = target.getParent();
+        if (targetDir != null && !Files.exists(targetDir)) {
+            try {
+                Files.createDirectories(targetDir);
+            } catch (IOException e) {
+                System.err.println("Cannot create output directory: " + e.getMessage());
+                System.exit(1);
+            }
+        }
+
         try (FileReader reader = new FileReader(srcPath)) {
             Lexer lexer = new Lexer(reader);
 
@@ -43,9 +68,10 @@ public class Compiler {
                 System.exit(2);
             } else {
                 System.out.println("Semantic analysis completed successfully.");
-                java.nio.file.Path parent = Paths.get(outPath).getParent();
-                if (parent != null && !java.nio.file.Files.exists(parent)) {
-                    java.nio.file.Files.createDirectories(parent);
+                Path parent = Paths.get(outPath).getParent();
+                System.out.println("Parent directory: " + parent);
+                if (parent != null && !Files.exists(parent)) {
+                    Files.createDirectories(parent);
                 }
                 // invoke your CodeGen
                 new CodeGen((Program) node, outPath).generate();

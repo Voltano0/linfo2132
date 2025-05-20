@@ -274,7 +274,7 @@ public class SemanticAnalysis implements ASTVisitor {
             return;
         }
 
-
+        node.setTypeStart(new TypeNode(currentType));
         // check if the start, end, and step expressions are null
         if (node.getStartExpr() != null) {
             node.getStartExpr().accept(this);
@@ -537,47 +537,47 @@ public class SemanticAnalysis implements ASTVisitor {
         }
     }
 
-    @Override
-    public void visit(RecordConstructorExpression node) {
-        String recordName = node.getRecordName();
-        List<ASTNode> arguments = node.getArguments();
-
-        // check if the record name is null
-        if (recordName == null || recordName.isEmpty()) {
-            errors.add( "RecordError : RecordConstructorExpression has an invalid or missing record name");
-            return;
-        }
-
-        // check if the record name is already defined
-        if (!symbolTable.containsKey(recordName)) {
-            errors.add( "RecordError : Record '" + recordName + "' is not defined");
-            return;
-        }
-
-        // check if the record name is a valid type
-        List<String> expectedTypes = recordFieldTypes.get(recordName);
-        if (expectedTypes == null) {
-            errors.add( "RecordError : Record '" + recordName + "' has no defined fields");
-            return;
-        }
-
-        // check if the number of arguments matches the expected types
-        if (arguments.size() != expectedTypes.size()) {
-            errors.add( "RecordError : Incorrect number of arguments for record '" + recordName + "'");
-            return;
-        }
-
-        // check if the argument types match the expected types
-        for (int i = 0; i < arguments.size(); i++) {
-            ASTNode argument = arguments.get(i);
-            argument.accept(this);
-            if (!currentType.equals(expectedTypes.get(i))) {
-                errors.add( "RecordError : Argument type mismatch for record '" + recordName + "' at position " + i);
-            }
-        }
-
-        currentType = recordName;
-    }
+    //@Override
+    //    public void visit(RecordConstructorExpression node) {
+    //        String recordName = node.getRecordName();
+    //        List<ASTNode> arguments = node.getArguments();
+    //
+    //        // check if the record name is null
+    //        if (recordName == null || recordName.isEmpty()) {
+    //            errors.add( "RecordError : RecordConstructorExpression has an invalid or missing record name");
+    //            return;
+    //        }
+    //
+    //        // check if the record name is already defined
+    //        if (!symbolTable.containsKey(recordName)) {
+    //            errors.add( "RecordError : Record '" + recordName + "' is not defined");
+    //            return;
+    //        }
+    //
+    //        // check if the record name is a valid type
+    //        List<String> expectedTypes = recordFieldTypes.get(recordName);
+    //        if (expectedTypes == null) {
+    //            errors.add( "RecordError : Record '" + recordName + "' has no defined fields");
+    //            return;
+    //        }
+    //
+    //        // check if the number of arguments matches the expected types
+    //        if (arguments.size() != expectedTypes.size()) {
+    //            errors.add( "RecordError : Incorrect number of arguments for record '" + recordName + "'");
+    //            return;
+    //        }
+    //
+    //        // check if the argument types match the expected types
+    //        for (int i = 0; i < arguments.size(); i++) {
+    //            ASTNode argument = arguments.get(i);
+    //            argument.accept(this);
+    //            if (!currentType.equals(expectedTypes.get(i))) {
+    //                errors.add( "RecordError : Argument type mismatch for record '" + recordName + "' at position " + i);
+    //            }
+    //        }
+    //
+    //        currentType = recordName;
+    //    }
 
     @Override
     public void visit(RecordDefinition node) {
@@ -811,7 +811,14 @@ public class SemanticAnalysis implements ASTVisitor {
                 errors.add( "RecordError : Argument type mismatch for record '" + recordName + "' at position " + i);
             }
         }
-
+        // add the type of all arguments inside a new List<TypeNode>
+        List<TypeNode> typeArguments = new ArrayList<>();
+        for (ASTNode argument : arguments) {
+            argument.accept(this);
+            TypeNode typeNode = new TypeNode(currentType);
+            typeArguments.add(typeNode);
+        }
+        node.setTypeArguments(typeArguments);
         currentType = recordName;
     }
 

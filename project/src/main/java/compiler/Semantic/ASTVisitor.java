@@ -17,7 +17,6 @@ public interface ASTVisitor {
     void visit(LiteralExpression node);
     void visit(Parameter node);
     void visit(Program node);
-    void visit(RecordConstructorExpression node);
     void visit(RecordDefinition node);
     void visit(ReturnStatement node);
     void visit(TypeNode node);

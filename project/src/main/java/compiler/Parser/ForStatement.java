@@ -5,9 +5,12 @@ import compiler.Semantic.*;
 public class ForStatement extends ASTNode {
     private String iterator;
     private ASTNode startExpr;
+    private TypeNode typeStart;
     private ASTNode endExpr;
+
     private ASTNode stepExpr;
     private ASTNode block;
+
 
     public ForStatement(String iterator, ASTNode startExpr, ASTNode endExpr, ASTNode stepExpr, ASTNode block) {
         this.iterator = iterator;
@@ -32,7 +35,12 @@ public class ForStatement extends ASTNode {
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
-
+    public TypeNode getTypeStart() {
+        return typeStart;
+    }
+    public void setTypeStart(TypeNode typeStart) {
+        this.typeStart = typeStart;
+    }
     public ASTNode getBlock() {
         return block;
     }

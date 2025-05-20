@@ -5,6 +5,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import compiler.Semantic.ASTVisitor;
+
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
 
@@ -16,10 +18,11 @@ import static compiler.CodeGen.CodeGen.desc;
 public class CodeGenVisitor implements ASTVisitor {
     private final MethodVisitor mv;
     private final Map<String,Integer> locals;
-
-    public CodeGenVisitor(MethodVisitor mv, Map<String,Integer> locals) {
+    private String className;
+    public CodeGenVisitor(MethodVisitor mv, Map<String,Integer> locals, String className) {
         this.mv     = mv;
         this.locals = locals;
+        this.className = className;
     }
 
     @Override
@@ -95,11 +98,11 @@ public class CodeGenVisitor implements ASTVisitor {
         if (locals.containsKey(name)) {
             TypeNode t = node.getType();
             int slot = locals.get(name);
-            mv.visitVarInsn(t.isIntOrBool() ? Opcodes.LLOAD : Opcodes.ILOAD, slot);
+            mv.visitVarInsn(t.isIntOrBool() ? Opcodes.ILOAD : Opcodes.LLOAD, slot);
         } else {
             // static field on Main
             mv.visitFieldInsn(Opcodes.GETSTATIC,
-                    "Main",
+                    this.className,
                     name,
                     desc(node.getType().getTypeName()));
         }
@@ -188,7 +191,7 @@ public class CodeGenVisitor implements ASTVisitor {
             // --- READS ---
             case "readInt" -> {
                 mv.visitFieldInsn(Opcodes.GETSTATIC,
-                        "Main",
+                        this.className,
                         "__scanner",
                         "Ljava/util/Scanner;");
                 // call nextInt(): ()I
@@ -199,7 +202,7 @@ public class CodeGenVisitor implements ASTVisitor {
                         false);
             }
             case "readFloat" -> {
-                mv.visitFieldInsn(Opcodes.GETSTATIC, "Main", "__scanner", "Ljava/util/Scanner;");
+                mv.visitFieldInsn(Opcodes.GETSTATIC, this.className, "__scanner", "Ljava/util/Scanner;");
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                         "java/util/Scanner",
                         "nextFloat",
@@ -207,7 +210,7 @@ public class CodeGenVisitor implements ASTVisitor {
                         false);
             }
             case "readString" -> {
-                mv.visitFieldInsn(Opcodes.GETSTATIC, "Main", "__scanner", "Ljava/util/Scanner;");
+                mv.visitFieldInsn(Opcodes.GETSTATIC, this.className, "__scanner", "Ljava/util/Scanner;");
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                         "java/util/Scanner",
                         "nextLine",
@@ -264,43 +267,155 @@ public class CodeGenVisitor implements ASTVisitor {
                 sig.append(retDesc);
 
                 mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        "Main",
+                        this.className,
                         name,
                         sig.toString(),
                         false);
             }
         }
     }
-    @Override public void visit(RecordDeclaration node) {}
+
+    @Override public void visit(RecordDeclaration node) {
+        String recName = node.getRecordName();       // e.g. "Point"
+        String varName = node.getVariableName();     // e.g. "p"
+
+        // 1) Allocate a new Record object
+        mv.visitTypeInsn(Opcodes.NEW, recName);
+        mv.visitInsn(Opcodes.DUP);
+
+        // 2) Emit code for each constructor argument
+        //    (they must already be typed by semantic analysis)
+        for (ASTNode arg : node.getArguments()) {
+            (arg).accept(this);
+        }
+
+        // 3) Build the constructor descriptor "(T1T2…)V"
+        StringBuilder ctorSig = new StringBuilder("(");
+        for (TypeNode arg : node.getTypeArguments()) {
+            ctorSig.append(desc(arg.getTypeName()));
+        }
+        ctorSig.append(")V");
+
+        // 4) Invoke the record’s <init> on the new+dup object
+        mv.visitMethodInsn(
+                Opcodes.INVOKESPECIAL,
+                recName,
+                "<init>",
+                ctorSig.toString(),
+                false
+        );
+
+        // 5) Store the new record into the variable
+        if (locals.containsKey(varName)) {
+            // local slot
+            int slot = locals.get(varName);
+            mv.visitVarInsn(Opcodes.ASTORE, slot);
+        }
+    }
+
+
+
+    @Override public void visit(IfStatement n){
+        Label Lelse = new Label(), Lend = new Label();
+        n.getCondition().accept(this);
+        mv.visitJumpInsn(Opcodes.IFEQ, Lelse);
+        n.getThenBlock().accept(this);
+        mv.visitJumpInsn(Opcodes.GOTO, Lend);
+        mv.visitLabel(Lelse);
+        if(n.getElseBlock() != null) {
+            n.getElseBlock().accept(this);
+        }
+        mv.visitLabel(Lend);
+    }
+    @Override public void visit(WhileStatement n){
+        Label Lbegin = new Label(), Lend = new Label();
+        mv.visitLabel(Lbegin);
+        n.getCondition().accept(this);
+        mv.visitJumpInsn(Opcodes.IFEQ, Lend);
+        n.getBlock().accept(this);
+        mv.visitJumpInsn(Opcodes.GOTO, Lbegin);
+        mv.visitLabel(Lend);
+    }
+    @Override public void visit(ForStatement n){
+        n.getStartExpr().accept(this);
+        int slot = locals.size();
+        locals.put(n.getIterator(), slot);
+        mv.visitVarInsn(Opcodes.ISTORE, slot);
+
+        Label Lbegin = new Label(), Lend = new Label();
+        mv.visitLabel(Lbegin);
+
+        mv.visitVarInsn(Opcodes.ILOAD, slot);
+        n.getEndExpr().accept(this);
+        mv.visitJumpInsn(Opcodes.IF_ICMPGT, Lend);
+        n.getBlock().accept(this);
+
+        mv.visitVarInsn(Opcodes.ILOAD, slot);
+        n.getStepExpr().accept(this);
+        mv.visitInsn(Opcodes.IADD);
+        mv.visitVarInsn(Opcodes.ISTORE, slot);
+
+        mv.visitJumpInsn(Opcodes.GOTO, Lbegin);
+        mv.visitLabel(Lend);
+    }
+    @Override public void visit(VariableDeclaration n){
+        int slot = locals.size();
+        locals.put(n.getVariableName(), slot);
+
+        if(n.getInitializer() != null) {
+            n.getInitializer().accept(this);
+            TypeNode t = n.getType();
+            int storeOp;
+            switch (t.getTypeName()) {
+                case "int", "boolean" -> storeOp = Opcodes.ISTORE;
+                case "long"           -> storeOp = Opcodes.LSTORE;
+                case "float"          -> storeOp = Opcodes.FSTORE;
+                case "double"         -> storeOp = Opcodes.DSTORE;
+                default               -> storeOp = Opcodes.ASTORE;
+            }
+
+            mv.visitVarInsn(storeOp, slot);
+        }
+    }
+    @Override public void visit(AssignmentStatement node){
+        // 1) Compute the RHS and leave its value on the stack
+        node.getRight().accept(this);
+
+        // 2) Figure out where to store it
+        //    We assume the LHS is always a simple VariableExpression
+        String name = ((VariableExpression)node.getLeft()).getVariableName();
+        TypeNode t = ((VariableExpression)node.getLeft()).getType();
+
+        if (locals.containsKey(name)) {
+            // a local variable
+            int slot = locals.get(name);
+            switch (t.getTypeName()) {
+                case "int", "boolean" -> mv.visitVarInsn(Opcodes.ISTORE, slot);
+                case "long"           -> mv.visitVarInsn(Opcodes.LSTORE, slot);
+                case "float"          -> mv.visitVarInsn(Opcodes.FSTORE, slot);
+                case "double"         -> mv.visitVarInsn(Opcodes.DSTORE, slot);
+                default                -> mv.visitVarInsn(Opcodes.ASTORE, slot);
+            }
+        } else {
+            // a top‐level/static field on Main
+            mv.visitFieldInsn(
+                    Opcodes.PUTSTATIC,
+                    this.className,
+                    name,
+                    desc(t.getTypeName())
+            );
+        }
+    }
+
+
     @Override public void visit(IndexExpression node) {}
     @Override public void visit(FreeStatement node) {}
     @Override public void visit(FunctionDeclaration node) {}
-    @Override public void visit(RecordConstructorExpression n){}
-
-    @Override
-    public void visit(RecordDefinition node) {
-
-    }
-
-    @Override public void visit(IfStatement n){}
-    @Override public void visit(WhileStatement n){}
-    @Override public void visit(ForStatement n){}
-    @Override public void visit(VariableDeclaration n){}
-    @Override public void visit(AssignmentStatement n){}
+    @Override public void visit(RecordDefinition node) {}
     @Override public void visit(FieldDeclaration n){}
     @Override public void visit(ConstantDeclaration n){}
     @Override public void visit(Parameter n){}
-
-    @Override
-    public void visit(Program node) {
-
-    }
-
     @Override public void visit(TypeNode n){}
-
-    @Override
-    public void visit(UnaryExpression node) {
-
-    }
-
+    @Override public void visit(UnaryExpression node) {}
+    @Override public void visit(Program node) {}
 }

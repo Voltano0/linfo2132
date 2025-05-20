@@ -13,36 +13,41 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 
 public class CodeGen {
-
     private final Program program;
     private  ClassWriter cw;
     private  MethodVisitor mv;
     private final String outputClassPath;
-    private Lexer lexer;
-    private Symbol currentSymbol;
-    private Symbol nextSymbol;
-
     public CodeGen(Program program, String outputClassPath) throws IOException {
         this.program = program;
         this.outputClassPath = outputClassPath;
     }
+    private String classo;
+    public void setClass(String className) {
+        this.classo = className;
+    }
+
 
     public void generate() throws IOException {
         // 1. create output path if does not exist
         Path outputPath = Paths.get(outputClassPath);
         Path outputDir = outputPath.getParent();
         if (outputDir ==null){
-            outputDir = Paths.get("");
+            outputDir = Paths.get(".");
         }
-        if (outputDir != null && !Files.exists(outputDir)) {
-            Files.createDirectories(outputDir);
-        }
-        cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, "Main", null, "java/lang/Object", null);
+        Files.createDirectories(outputDir);
+
+        String filenName = outputPath.getFileName().toString();
+        String className = filenName.endsWith(".class") ? filenName.substring(0, filenName.length() - 6) : filenName;
+        setClass(className);
+
+        cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC, className, null, "java/lang/Object", null);
+
 
 
         for (ASTNode stmt : program.getStatements()) {
@@ -56,6 +61,16 @@ public class CodeGen {
                         null                            // no initial value here
                 ).visitEnd();
             }
+            else if(stmt instanceof VariableDeclaration vd) {
+                // ACC_PRIVATE | ACC_STATIC
+                cw.visitField(
+                        Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                        vd.getVariableName(),                   // the field name, e.g. "message"
+                        desc(vd.getType().getTypeName()),  // JVM descriptor, e.g. "I" or "Ljava/lang/String;"
+                        null,                           // no generic signature
+                        null                            // no initial value here
+                ).visitEnd();
+            }
         }
         // 3. create class file for record
         for (ASTNode smth : program.getStatements()) {
@@ -63,23 +78,28 @@ public class CodeGen {
                 emitRecord((RecordDefinition) smth, outputDir.toString());
             }
         }
+        cw.visitField(Opcodes.ACC_PRIVATE|Opcodes.ACC_STATIC,
+                        "__scanner",
+                        "Ljava/util/Scanner;",
+                        null, null)
+                .visitEnd();
 
         // 4. Generate the default constructor
         emitDefaultConstructor();
-        emitClinit();
+        emitClinit(className);
 
         for (ASTNode smth : program.getStatements()) {
             if (smth instanceof FunctionDeclaration fn && !fn.getFunctionName().equals("main")) {
-                emitFunction((FunctionDeclaration) smth, outputDir.toString());
+                emitFunction(fn, outputDir.toString());
             }
         }
         // 6. Generate the main method
         FunctionDeclaration mainFn = program.getMainFn();
         if (mainFn == null) {
-            System.out.println("No main function found");
-            return;
-        }
-        emitMain(mainFn, "Main");
+            System.err.println("No main function found");
+
+        }else {
+        emitMain(mainFn, className);}
 
         // 7. Write the class to the output file
         cw.visitEnd();
@@ -92,7 +112,7 @@ public class CodeGen {
         switch(typeNode){
             case "int":
                 return "I";
-            case "bool":
+            case "boolean", "bool":
                 return "Z";
             case "string":
                 return "Ljava/lang/String;";
@@ -107,8 +127,8 @@ public class CodeGen {
 
     private void emitRecord(RecordDefinition record, String outputDir) throws IOException {
         String recordName = record.getRecordName();
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, recordName, null, "java/lang/Object", null);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, recordName, null, "java/lang/Object", null);
 
         // Generate fields
         for (ASTNode field : record.getFields()) {
@@ -172,10 +192,17 @@ public class CodeGen {
         mv.visitCode();
         // no named parameters—but if you want to reference args, slot 0 holds the String[]
         HashMap<String, Integer> localSlots = new HashMap<>();
+        int nextSlot = 1;                   // reserve slot 0 for args
+
+        // if you even want to reference "args", you can:
         // localSlots.put("args", 0);
 
-        // emit main body
-        mainFn.getBody().accept(new CodeGenVisitor(mv, localSlots));
+        for (Parameter p : mainFn.getParameters()) {
+            // (in your case main has no params, so this loop is empty)
+            localSlots.put(p.getParameterName(), nextSlot);
+            nextSlot += p.getType().isWide() ? 2 : 1;
+        }
+        mainFn.getBody().accept(new CodeGenVisitor(mv, localSlots, className));
 
         mv.visitInsn(Opcodes.RETURN);
         mv.visitMaxs(-1, -1);
@@ -192,20 +219,36 @@ public class CodeGen {
         mv.visitEnd();
     }
 
-    private void emitClinit() {// for constant declarations
+    private void emitClinit(String classname) {// for constant declarations
         mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
         mv.visitCode();
 
-        CodeGenVisitor visitor = new CodeGenVisitor(mv, new HashMap<>());
+
+        CodeGenVisitor visitor = new CodeGenVisitor(mv, new HashMap<>(), classname);
+
         for(ASTNode smth : program.getStatements()) {
             if (smth instanceof ConstantDeclaration cd) {
                 cd.getExpression().accept(visitor);
-                mv.visitFieldInsn(Opcodes.PUTSTATIC, "Main", cd.getName(), desc(cd.getType().getTypeName()));
+                mv.visitFieldInsn(Opcodes.PUTSTATIC, classname, cd.getName(), desc(cd.getType().getTypeName()));
             }else if (smth instanceof VariableDeclaration vd) {
                 vd.getInitializer().accept( visitor);
-                mv.visitFieldInsn(Opcodes.PUTSTATIC, "Main", vd.getVariableName(), desc(vd.getType().getTypeName()));
+                mv.visitFieldInsn(Opcodes.PUTSTATIC, classname, vd.getVariableName(), desc(vd.getType().getTypeName()));
             }
         }
+        // **Always** init the scanner:
+        mv.visitTypeInsn(Opcodes.NEW, "java/util/Scanner");
+        mv.visitInsn(Opcodes.DUP);
+        mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "in", "Ljava/io/InputStream;");
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                "java/util/Scanner",
+                "<init>",
+                "(Ljava/io/InputStream;)V",
+                false);
+        mv.visitFieldInsn(Opcodes.PUTSTATIC,
+                classname,
+                "__scanner",
+                "Ljava/util/Scanner;");
+
         mv.visitInsn(Opcodes.RETURN);
         mv.visitMaxs(-1, -1);
         mv.visitEnd();
@@ -230,7 +273,7 @@ public class CodeGen {
         }
 
         //  ⇨ **Here**: drive your bytecode visitor over the function body
-        CodeGenVisitor gen = new CodeGenVisitor(mv, localSlots);
+        CodeGenVisitor gen = new CodeGenVisitor(mv, localSlots, classo);
         function.getBody().accept(gen);
 
         //  If the last statement wasn’t a return, emit a default
